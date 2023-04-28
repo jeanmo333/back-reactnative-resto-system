@@ -1,25 +1,27 @@
 import { Request, Response } from "express";
 import { BadRequestError } from "../helpers/api-erros";
 import { userRepository } from "../repositories/userRepository";
-import bcrypt, { hash, hashSync } from "bcrypt";
+import bcrypt, { hash } from "bcrypt";
 import jwt from "jsonwebtoken";
-import { User } from "../entities/User";
+
+import * as dotenv from "dotenv";
+dotenv.config();
+import { v2 as cloudinary } from "cloudinary";
+cloudinary.config(process.env.CLOUDINARY_URL || "");
+
 import generarId from "../helpers/generarId";
-import emailForgetPassword from "../helpers/emailForgetPassword";
-import emailRegister from "../helpers/emailRegister";
 import { IUser } from "../interfaces";
-import { MessagePort } from "worker_threads";
+import { isUUID } from "class-validator";
 
 export class UserController {
   async create(req: Request, res: Response) {
-    const {
-      name = "",
-      email = "",
-      password = "",
-      phone = "",
-      address = "",
-      web = "",
-    } = req.body as IUser;
+    console.log(JSON.parse(req.body.user));
+
+    const { name = "", email = "", password = "" } = JSON.parse(
+      req.body.user
+    ) as IUser;
+
+    const { tempFilePath } = req.files!.archive as any;
 
     if ([name, email, password].includes("")) {
       throw new BadRequestError("Hay Campo vacio");
@@ -37,22 +39,12 @@ export class UserController {
       name,
       email,
       password: hashPassword,
-      phone,
-      address,
-      web,
     });
+    const { secure_url } = await cloudinary.uploader.upload(tempFilePath);
+    newUser.image = secure_url;
 
     try {
       await userRepository.save(newUser);
-      // send email
-      //   emailRegister({
-      //     email,
-      //     name,
-      //     token: newUser.token,
-      //   });
-
-      //const { password: _, ...user } = newUser;
-
       return res.status(201).json({ message: "Registrado con exito" });
     } catch (error) {
       console.log(error);
@@ -72,6 +64,7 @@ export class UserController {
       web = "",
       roles = "",
     } = req.body;
+    //JSON.parse(req.body.user)
 
     if ([name, email, password, roles].includes("")) {
       throw new BadRequestError("Hay Campo vacio");
@@ -293,34 +286,45 @@ export class UserController {
   /*********************************************************************/
 
   async updateProfile(req: Request, res: Response) {
-    const { id } = req.user;
-    const { email, name, phone, address, web } = req.body;
+    const { id } = req.user as IUser;
+    const { tempFilePath } = req.files!.archive as any;
+    const { name, phone, address, web, lastname } = req.body;
+
+    if (!isUUID(id)) {
+      const e = new Error("usuario no valida");
+      return res.status(400).json({ message: e.message });
+    }
 
     const user = await userRepository.findOneBy({ id });
     if (!user) {
-      throw new BadRequestError("usuario no existe");
+      const e = new Error("usuario no existe");
+      return res.status(400).json({ msg: e.message });
     }
 
-    if (user.email !== req.body.email) {
-      const existEmail = await userRepository.findOneBy({ email });
-
-      if (existEmail) {
-        throw new BadRequestError("Ese email ya esta en uso");
-      }
+    // Limpiar imágenes previas cloudinary
+    if (user.image) {
+      const arrayName = user.image.split("/");
+      const nameFile = arrayName[arrayName.length - 1];
+      const [public_id] = nameFile.split(".");
+      cloudinary.uploader.destroy(public_id);
     }
+
+    const { secure_url } = await cloudinary.uploader.upload(tempFilePath);
+    user.image = secure_url;
 
     try {
-      const userUpdate = await userRepository.update(id!, {
-        email,
-        name,
-        phone,
-        address,
-        web,
-      });
+      user.name = name || user.name;
+      user.lastname = lastname || user.lastname;
+      user.phone = phone || user.phone;
+      user.address = address || user.address;
+      user.web = web || user.web;
+
+      const userUpdate = await userRepository.save(user);
       res.json(userUpdate);
     } catch (error) {
       console.log(error);
-      throw new BadRequestError("revisar log servidor");
+      const e = new Error("hubo un error");
+      return res.status(400).json({ msg: e.message });
     }
   }
 

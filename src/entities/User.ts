@@ -12,9 +12,11 @@ import {
   BeforeUpdate,
   Column,
   Entity,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from "typeorm";
 import generarId from "../helpers/generarId";
+import { Category } from "./Category";
 
 @Entity("users")
 export class User {
@@ -53,7 +55,7 @@ export class User {
   @IsOptional()
   @Column("text", {
     array: true,
-    default: ["autor"],
+    default: ["client"],
   })
   roles: string[];
 
@@ -66,26 +68,47 @@ export class User {
   @IsOptional()
   @IsString()
   @MinLength(1)
-  @Column("text")
+  @Column("text", {
+    default: "",
+  })
   phone: string;
 
   @IsOptional()
   @IsString()
+  @Column("text", {
+    default: "",
+  })
+  image: string;
+
+  @IsOptional()
+  @IsString()
   @MinLength(1)
-  @Column("text")
+  @Column("text", {
+    default: "",
+  })
+  lastname: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  @Column("text", {
+    default: "",
+  })
   address: string;
 
   @IsOptional()
   @IsString()
   @MinLength(1)
-  @Column("text")
+  @Column("text", {
+    default: "",
+  })
   web: string;
 
   //   @OneToMany(() => Product, (product) => product.user)
   //   product: Product;
 
-  //   @OneToMany(() => Category, (category) => category.user)
-  //   category: Product;
+  @OneToMany(() => Category, (category) => category.user)
+  category: Category;
 
   //   @OneToMany(() => Customer, (customer) => customer.user)
   //   customer: Customer;

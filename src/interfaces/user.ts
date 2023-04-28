@@ -3,9 +3,11 @@ export interface IUser {
   name: string;
   email: string;
   password?: string;
-  role: string[];
+  roles: string[];
   phone?: string;
   address?: string;
+  image?: string;
+  lastname?: string;
   web: string;
   isActive: boolean;
   token: string;
