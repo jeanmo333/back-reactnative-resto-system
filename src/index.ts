@@ -8,6 +8,7 @@ import { AppDataSource } from "./data-source";
 import { errorMiddleware } from "./middlewares/error";
 import userRoutes from "./routes/userRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
+import productRoutes from "./routes/productRoutes";
 
 AppDataSource.initialize().then(() => {
   const PORT = process.env.PORT || 3000;
@@ -28,14 +29,15 @@ AppDataSource.initialize().then(() => {
   app.set("port", PORT);
   app.use("/api/users", userRoutes);
   app.use("/api/categories", categoryRoutes);
+  app.use("/api/products", productRoutes);
 
   app.use(errorMiddleware);
 
-  // app.listen(PORT, () => {
-  //   console.log(`Server listening on port: ${PORT}`);
-  // });
-
-  app.listen(4000, "192.168.1.4" || "localhost", function () {
-    console.log("Aplicacion de NodeJS " + PORT + " Iniciada...");
+  app.listen(PORT, () => {
+    console.log(`Server listening on port: ${PORT}`);
   });
+
+  // app.listen(4000, "192.168.1.6" || "localhost", function () {
+  //   console.log("Aplicacion de NodeJS " + PORT + " Iniciada...");
+  // });
 });

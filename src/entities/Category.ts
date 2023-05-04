@@ -10,6 +10,7 @@ import {
 } from "typeorm";
 //import { Product } from './Product';
 import { User } from "./User";
+import { Product } from "./Product";
 
 @Entity("categories")
 export class Category {
@@ -46,8 +47,8 @@ export class Category {
   })
   isActive: boolean;
 
-  // @OneToMany(() => Product, (product) => product.category)
-  // product?: Product;
+  @OneToMany(() => Product, (product) => product.category)
+  product?: Product;
 
   @ManyToOne(() => User, (user) => user.category, { eager: true })
   user: Partial<User>;
