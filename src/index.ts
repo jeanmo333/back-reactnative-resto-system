@@ -8,7 +8,8 @@ import { AppDataSource } from "./data-source";
 import { errorMiddleware } from "./middlewares/error";
 import userRoutes from "./routes/userRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
-import productRoutes from "./routes/productRoutes";
+import productRoutes from "./routes/plateRoutes";
+import plateRoutes from "./routes/plateRoutes";
 
 AppDataSource.initialize().then(() => {
   const PORT = process.env.PORT || 3000;
@@ -29,7 +30,7 @@ AppDataSource.initialize().then(() => {
   app.set("port", PORT);
   app.use("/api/users", userRoutes);
   app.use("/api/categories", categoryRoutes);
-  app.use("/api/products", productRoutes);
+  app.use("/api/plates", plateRoutes);
 
   app.use(errorMiddleware);
 

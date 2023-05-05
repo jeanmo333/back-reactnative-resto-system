@@ -10,7 +10,7 @@ import {
 } from "typeorm";
 //import { Product } from './Product';
 import { User } from "./User";
-import { Product } from "./Product";
+import { Plate } from "./Plate";
 
 @Entity("categories")
 export class Category {
@@ -32,13 +32,12 @@ export class Category {
   })
   description: string;
 
-  @IsOptional()
-  @IsString()
-  @MinLength(1)
-  @Column("text", {
-    default: "",
-  })
-  image: string;
+  // @IsOptional()
+  // @IsString()
+  // @Column("text", {
+  //   default: "",
+  // })
+  // image: string;
 
   @IsOptional()
   @IsBoolean()
@@ -47,8 +46,8 @@ export class Category {
   })
   isActive: boolean;
 
-  @OneToMany(() => Product, (product) => product.category)
-  product?: Product;
+  @OneToMany(() => Plate, (plate) => plate.category)
+  plate?: Plate;
 
   @ManyToOne(() => User, (user) => user.category, { eager: true })
   user: Partial<User>;

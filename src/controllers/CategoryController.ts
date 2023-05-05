@@ -13,13 +13,13 @@ import { ICategory } from "../interfaces";
 
 export class CategoryController {
   async create(req: Request, res: Response) {
-    // const { name = "", description = "" } = req.body;
+    const { name = "", description = "" } = req.body;
 
-    const { name = "", description = "" } = JSON.parse(
-      req.body.category
-    ) as ICategory;
+    // const { name = "", description = "" } = JSON.parse(
+    //   req.body.category
+    // ) as ICategory;
 
-    const { tempFilePath } = req.files!.archive as any;
+    // const { tempFilePath } = req.files!.archive as any;
 
     if ([name, description].includes("")) {
       throw new BadRequestError("Hay Campo vacio");
@@ -33,8 +33,8 @@ export class CategoryController {
     newCategory.user = req.user;
 
     //claudininary
-    const { secure_url } = await cloudinary.uploader.upload(tempFilePath);
-    newCategory.image = secure_url;
+    // const { secure_url } = await cloudinary.uploader.upload(tempFilePath);
+    // newCategory.image = secure_url;
     try {
       await categoryRepository.save(newCategory);
       return res.status(201).json({ newCategory, message: "Creado con exito" });
@@ -98,13 +98,14 @@ export class CategoryController {
   //********************************************************************** */
 
   async update(req: Request, res: Response) {
-    // const { name, description, isActive } = req.body;
+    const { name, description, isActive } = req.body;
 
-    const { name, description, isActive } = JSON.parse(
-      req.body.category
-    ) as ICategory;
+    // const { name, description, isActive } = JSON.parse(
+    //   req.body.category
+    // ) as ICategory;
+
     const { id } = req.params;
-    const { tempFilePath } = req.files!.archive as any;
+    // const { tempFilePath } = req.files!.archive as any;
 
     if (!isUUID(id)) throw new BadRequestError("Categoria no valida");
 
@@ -115,19 +116,19 @@ export class CategoryController {
       throw new UnauthorizedError("acceso no permitido");
 
     // Limpiar imágenes previas cloudinary
-    if (category.image) {
-      const arrayName = category.image.split("/");
-      const nameFile = arrayName[arrayName.length - 1];
-      const [public_id] = nameFile.split(".");
-      cloudinary.uploader.destroy(public_id);
-    }
+    // if (category.image) {
+    //   const arrayName = category.image.split("/");
+    //   const nameFile = arrayName[arrayName.length - 1];
+    //   const [public_id] = nameFile.split(".");
+    //   cloudinary.uploader.destroy(public_id);
+    // }
 
-    const { secure_url } = await cloudinary.uploader.upload(tempFilePath);
+    //  const { secure_url } = await cloudinary.uploader.upload(tempFilePath);
 
     category.name = name || category.name;
     category.isActive = isActive || category.isActive;
     category.description = description || category.description;
-    category.image = secure_url || category.image;
+    // category.image = secure_url || category.image;
 
     try {
       await categoryRepository.save(category);
@@ -152,12 +153,12 @@ export class CategoryController {
     //   throw new UnauthorizedError("acceso no permitido");
 
     // Limpiar imágenes previas cloudinary
-    if (category.image) {
-      const arrayName = category.image.split("/");
-      const nameFile = arrayName[arrayName.length - 1];
-      const [public_id] = nameFile.split(".");
-      cloudinary.uploader.destroy(public_id);
-    }
+    // if (category.image) {
+    //   const arrayName = category.image.split("/");
+    //   const nameFile = arrayName[arrayName.length - 1];
+    //   const [public_id] = nameFile.split(".");
+    //   cloudinary.uploader.destroy(public_id);
+    // }
 
     try {
       await categoryRepository.delete(id);

@@ -17,7 +17,7 @@ import {
 } from "typeorm";
 import generarId from "../helpers/generarId";
 import { Category } from "./Category";
-import { Product } from "./Product";
+import { Plate } from "./Plate";
 
 @Entity("users")
 export class User {
@@ -105,8 +105,8 @@ export class User {
   })
   web: string;
 
-  @OneToMany(() => Product, (product) => product.user)
-  product: Product;
+  @OneToMany(() => Plate, (plate) => plate.user)
+  plate: Plate;
 
   @OneToMany(() => Category, (category) => category.user)
   category: Category;
