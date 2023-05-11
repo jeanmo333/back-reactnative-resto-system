@@ -8,7 +8,6 @@ import { AppDataSource } from "./data-source";
 import { errorMiddleware } from "./middlewares/error";
 import userRoutes from "./routes/userRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
-import productRoutes from "./routes/plateRoutes";
 import plateRoutes from "./routes/plateRoutes";
 
 AppDataSource.initialize().then(() => {
@@ -19,6 +18,7 @@ AppDataSource.initialize().then(() => {
   app.use(express.json());
   dotenv.config();
   app.use(cors());
+
   //carga de archivo
   app.use(
     fileUpload({

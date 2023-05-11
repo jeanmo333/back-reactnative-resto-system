@@ -106,6 +106,7 @@ export class Plate {
 
   @ManyToOne(() => Category, (category) => category.plate, {
     onDelete: "CASCADE",
+    onUpdate: "CASCADE",
   })
   category: Category;
 

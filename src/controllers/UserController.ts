@@ -12,10 +12,18 @@ cloudinary.config(process.env.CLOUDINARY_URL || "");
 import generarId from "../helpers/generarId";
 import { IUser } from "../interfaces";
 import { isUUID } from "class-validator";
+import {
+  destroyImageClaudinary,
+  folderNameApp,
+  folderNameUsers,
+  uploadFileClaudinary,
+} from "../helpers/claudinary";
 
 export class UserController {
   async create(req: Request, res: Response) {
-    console.log(JSON.parse(req.body.user));
+    //  console.log(JSON.parse(req.body.user));
+
+    // const { name = "", email = "", password = "" } = req.body;
 
     const { name = "", email = "", password = "" } = JSON.parse(
       req.body.user
@@ -40,9 +48,12 @@ export class UserController {
       email,
       password: hashPassword,
     });
-    const { secure_url } = await cloudinary.uploader.upload(tempFilePath);
-    newUser.image = secure_url;
 
+    const secure_url = await uploadFileClaudinary(
+      tempFilePath,
+      `${folderNameApp}/${folderNameUsers}`
+    );
+    newUser.image = secure_url;
     try {
       await userRepository.save(newUser);
       return res.status(201).json({ message: "Registrado con exito" });
@@ -306,10 +317,15 @@ export class UserController {
       const arrayName = user.image.split("/");
       const nameFile = arrayName[arrayName.length - 1];
       const [public_id] = nameFile.split(".");
-      cloudinary.uploader.destroy(public_id);
+      await destroyImageClaudinary(
+        `${folderNameApp}/${folderNameUsers}/${public_id}`
+      );
     }
 
-    const { secure_url } = await cloudinary.uploader.upload(tempFilePath);
+    const secure_url = await uploadFileClaudinary(
+      tempFilePath,
+      `${folderNameApp}/${folderNameUsers}`
+    );
     user.image = secure_url;
 
     try {

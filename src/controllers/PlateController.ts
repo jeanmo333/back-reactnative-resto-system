@@ -1,4 +1,4 @@
-import { isUUID } from "class-validator";
+import { isUUID, MinLength } from "class-validator";
 import { Request, Response } from "express";
 
 import * as dotenv from "dotenv";
@@ -11,26 +11,38 @@ import { categoryRepository } from "../repositories/categoryRepository";
 import asyncForeach from "../helpers/async_foreach";
 import { plateRepository } from "../repositories/plateRepository";
 import { Plate } from "../entities/Plate";
+import {
+  folderNameApp,
+  folderNamePlates,
+  uploadFileClaudinary,
+} from "../helpers/claudinary";
 
 export class PlateController {
   async create(req: Request, res: Response) {
+    //console.log(JSON.parse(req.body.plate));
+    //console.log(req.files!.archives);
+
+    const archives = req.files!.archives as any;
+    const tempFilePaths = archives.map((archive: any) => archive.tempFilePath);
+
     const {
       name = "",
       description = "",
       prepared_price = 0,
       sale_price = 0,
       stock = 0,
-      category = "",
-    } = req.body;
+      idCategory = "",
+    } = JSON.parse(req.body.plate);
 
     let plateSave: any;
     let inserts = 0;
 
-    const archives = req.files!.archives as any;
-    const tempFilePaths = archives.map((archive: any) => archive.tempFilePath);
-
-    if ([name, category].includes("")) {
+    if ([name, idCategory].includes("")) {
       throw new BadRequestError("Hay Campo vacio");
+    }
+
+    if (archives.length > 3) {
+      throw new BadRequestError("maximo 3 imagenes");
     }
 
     const plateName = await plateRepository.findOneBy({ name });
@@ -38,8 +50,8 @@ export class PlateController {
       throw new BadRequestError("Plato ya existe");
     }
 
-    const categoryName = await categoryRepository.findOneBy({ name: category });
-    if (!categoryName) {
+    const category = await categoryRepository.findOneBy({ id: idCategory });
+    if (!category) {
       throw new BadRequestError("Categoria no existe");
     }
 
@@ -49,7 +61,7 @@ export class PlateController {
       prepared_price,
       sale_price,
       stock,
-      category: categoryName,
+      category,
     });
     newPlate.user = req.user;
 
@@ -58,7 +70,10 @@ export class PlateController {
 
       const start = async () => {
         await asyncForeach(tempFilePaths, async (archive: any) => {
-          const { secure_url } = await cloudinary.uploader.upload(archive);
+          const secure_url = await uploadFileClaudinary(
+            archive,
+            `${folderNameApp}/${folderNamePlates}`
+          );
 
           if (secure_url != undefined && secure_url != null) {
             // CREO LA IMAGEN EN CLAUDINARY
@@ -151,7 +166,7 @@ export class PlateController {
       prepared_price,
       sale_price,
       stock,
-      category,
+      // idCategory,
       isActive,
     } = req.body;
     const { id } = req.params;
@@ -159,14 +174,17 @@ export class PlateController {
     if (!isUUID(id)) throw new BadRequestError("Plato no valido");
 
     const plate = await plateRepository.findOneBy({ id });
-    if (!plate) throw new BadRequestError("Producto no existe");
+    if (!plate) throw new BadRequestError("Platillo no existe");
+
+    // const category = await categoryRepository.findOneBy({ id: idCategory });
+    // if (!category) throw new BadRequestError("Categoria no existe");
 
     plate.name = name || plate.name;
     plate.description = description || plate.description;
     plate.prepared_price = prepared_price || plate.prepared_price;
     plate.sale_price = sale_price || plate.sale_price;
     plate.stock = stock || plate.stock;
-    plate.category = category || plate.category;
+    // plate.category = category || plate.category;
     plate.isActive = isActive;
 
     try {
