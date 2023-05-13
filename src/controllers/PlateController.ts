@@ -12,6 +12,7 @@ import asyncForeach from "../helpers/async_foreach";
 import { plateRepository } from "../repositories/plateRepository";
 import { Plate } from "../entities/Plate";
 import {
+  destroyImageClaudinary,
   folderNameApp,
   folderNamePlates,
   uploadFileClaudinary,
@@ -55,6 +56,17 @@ export class PlateController {
       throw new BadRequestError("Categoria no existe");
     }
 
+    //delete some user column
+    delete req.user.password;
+    delete req.user.image;
+    delete req.user.createdAt;
+    delete req.user.isActive;
+    delete req.user.roles;
+    delete req.user.updateAt;
+    delete req.user.token;
+    delete req.user.phone;
+    delete req.user.lastname;
+
     const newPlate = plateRepository.create({
       name,
       description,
@@ -67,6 +79,13 @@ export class PlateController {
 
     try {
       plateSave = await plateRepository.save(newPlate);
+
+      //delete some category column
+      delete plateSave.category.createdAt;
+      delete plateSave.category.updateAt;
+      delete plateSave.category.isActive;
+      delete plateSave.category.user;
+      delete plateSave.category.user;
 
       const start = async () => {
         await asyncForeach(tempFilePaths, async (archive: any) => {
@@ -117,13 +136,28 @@ export class PlateController {
       const plates = await plateRepository.find({
         where: {
           isActive: true,
-          user: { id: req.user.id },
         },
         relations: {
           category: true,
         },
         take: Number(limit),
         skip: Number(offset),
+      });
+
+      plates.map((plate) => {
+        delete plate.user.password;
+        delete plate.user.image;
+        delete plate.user.createdAt;
+        delete plate.user.isActive;
+        delete plate.user.roles;
+        delete plate.user.updateAt;
+        delete plate.user.token;
+        delete plate.user.phone;
+        delete plate.user.lastname;
+        delete plate.category.createdAt;
+        delete plate.category.updateAt;
+        delete plate.category.isActive;
+        delete plate.category.user;
       });
 
       return res.json(plates);
@@ -141,11 +175,17 @@ export class PlateController {
 
     if (isUUID(term)) {
       plate = await plateRepository.findOne({
-        where: { id: term, user: { id: req.user.id } },
+        where: { id: term },
+        relations: {
+          category: true,
+        },
       });
     } else {
       plate = await plateRepository.findOne({
-        where: { name: term.toLowerCase(), user: { id: req.user.id } },
+        where: { name: term.toLowerCase() },
+        relations: {
+          category: true,
+        },
       });
     }
 
@@ -154,21 +194,27 @@ export class PlateController {
     if (plate.isActive === false)
       throw new BadRequestError("plato no esta activo");
 
+    delete plate.user.password;
+    delete plate.user.image;
+    delete plate.user.createdAt;
+    delete plate.user.isActive;
+    delete plate.user.roles;
+    delete plate.user.updateAt;
+    delete plate.user.token;
+    delete plate.user.phone;
+    delete plate.user.lastname;
+    delete plate.category.createdAt;
+    delete plate.category.updateAt;
+    delete plate.category.isActive;
+    delete plate.category.user;
+
     return res.json(plate);
   }
 
   //********************************************************************** */
 
   async update(req: Request, res: Response) {
-    const {
-      name,
-      description,
-      prepared_price,
-      sale_price,
-      stock,
-      // idCategory,
-      isActive,
-    } = req.body;
+    const { idCategory, ...rest } = req.body;
     const { id } = req.params;
 
     if (!isUUID(id)) throw new BadRequestError("Plato no valido");
@@ -176,21 +222,35 @@ export class PlateController {
     const plate = await plateRepository.findOneBy({ id });
     if (!plate) throw new BadRequestError("Platillo no existe");
 
-    // const category = await categoryRepository.findOneBy({ id: idCategory });
-    // if (!category) throw new BadRequestError("Categoria no existe");
-
-    plate.name = name || plate.name;
-    plate.description = description || plate.description;
-    plate.prepared_price = prepared_price || plate.prepared_price;
-    plate.sale_price = sale_price || plate.sale_price;
-    plate.stock = stock || plate.stock;
-    // plate.category = category || plate.category;
-    plate.isActive = isActive;
+    const category = await categoryRepository.findOneBy({ id: idCategory });
+    if (!category) throw new BadRequestError("Categoria no existe");
+    plate.category = category;
 
     try {
-      await plateRepository.save(plate);
+      await plateRepository.update(id, rest);
 
-      const plateUpdate = await plateRepository.findOneBy({ id });
+      const plateUpdate = await plateRepository.findOne({
+        where: { id },
+        relations: {
+          category: true,
+        },
+      });
+
+      delete plateUpdate!.user.password;
+      delete plateUpdate!.user.image;
+      delete plateUpdate!.user.createdAt;
+      delete plateUpdate!.user.isActive;
+      delete plateUpdate!.user.roles;
+      delete plateUpdate!.user.updateAt;
+      delete plateUpdate!.user.token;
+      delete plateUpdate!.user.phone;
+      delete plateUpdate!.user.lastname;
+
+      delete plateUpdate!.category.createdAt;
+      delete plateUpdate!.category.updateAt;
+      delete plateUpdate!.category.isActive;
+      delete plateUpdate!.category.user;
+
       return res.json({ plateUpdate, message: "Editado con exito" });
     } catch (error) {
       console.log(error);
@@ -208,6 +268,16 @@ export class PlateController {
 
     try {
       await plateRepository.delete(id);
+
+      // Limpiar imágenes previas
+      plate.images.map(async (image) => {
+        const arrayName = image.split("/");
+        const nameFile = arrayName[arrayName.length - 1];
+        const [public_id] = nameFile.split(".");
+        await destroyImageClaudinary(
+          `${folderNameApp}/${folderNamePlates}/${public_id}`
+        );
+      });
       return res.json({ message: "Eliminado con exito" });
     } catch (error) {
       console.log(error);

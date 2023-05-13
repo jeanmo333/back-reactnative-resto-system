@@ -63,109 +63,6 @@ export class UserController {
     }
   }
 
-  /*********************************************************************/
-
-  async createByAdmin(req: Request, res: Response) {
-    const {
-      name = "",
-      email = "",
-      password = "",
-      phone = "",
-      address = "",
-      web = "",
-      roles = "",
-    } = req.body;
-    //JSON.parse(req.body.user)
-
-    if ([name, email, password, roles].includes("")) {
-      throw new BadRequestError("Hay Campo vacio");
-    }
-
-    const userExists = await userRepository.findOneBy({ email });
-
-    if (userExists) {
-      throw new BadRequestError("Usuario ya existe");
-    }
-
-    const hashPassword = await bcrypt.hash(password, 10);
-
-    const newUser = userRepository.create({
-      name,
-      email,
-      password: hashPassword,
-      phone,
-      address,
-      web,
-      roles,
-    });
-
-    try {
-      await userRepository.save(newUser);
-
-      // send email
-      //   emailRegister({
-      //     email,
-      //     name,
-      //     token: newUser.token,
-      //   });
-
-      const { password: _, ...user } = newUser;
-
-      return res.status(201).json(user);
-    } catch (error) {
-      console.log(error);
-      throw new BadRequestError("revisar log servidor");
-    }
-  }
-
-  /*********************************************************************/
-
-  async getAllUsersByAdmin(req: Request, res: Response) {
-    const { limit = 10, offset = 0 } = req.query;
-    try {
-      const users = await userRepository.find({
-        where: {
-          isActive: true,
-        },
-        take: Number(limit),
-        skip: Number(offset),
-      });
-
-      return res.json(users);
-    } catch (error) {
-      console.log(error);
-      throw new BadRequestError("revisar log servidor");
-    }
-  }
-  /***************************************************************************** */
-  async updateUserByAdmin(req: Request, res: Response) {
-    const { id } = req.params;
-    const { email } = req.body;
-
-    const user = await userRepository.findOneBy({ id });
-    if (!user) {
-      throw new BadRequestError("usuario no existe");
-    }
-
-    if (user.email !== req.body.email) {
-      const existEmail = await userRepository.findOneBy({ email });
-
-      if (existEmail) {
-        throw new BadRequestError("Ese email ya esta en uso");
-      }
-    }
-
-    try {
-      const userUpdate = await userRepository.update(id!, req.body);
-      res.json(userUpdate);
-    } catch (error) {
-      console.log(error);
-      throw new BadRequestError("revisar log servidor");
-    }
-  }
-
-  /*********************************************************************/
-
   async login(req: Request, res: Response) {
     const { email = "", password = "" } = req.body;
 
@@ -296,10 +193,10 @@ export class UserController {
 
   /*********************************************************************/
 
-  async updateProfile(req: Request, res: Response) {
+  async updateProfileWithImage(req: Request, res: Response) {
     const { id } = req.user as IUser;
     const { tempFilePath } = req.files!.archive as any;
-    const { name, phone, address, web, lastname } = req.body;
+    const { name, phone, lastname } = JSON.parse(req.body.user);
 
     if (!isUUID(id)) {
       const e = new Error("usuario no valida");
@@ -309,18 +206,16 @@ export class UserController {
     const user = await userRepository.findOneBy({ id });
     if (!user) {
       const e = new Error("usuario no existe");
-      return res.status(400).json({ msg: e.message });
+      return res.status(400).json({ message: e.message });
     }
 
     // Limpiar imágenes previas cloudinary
-    if (user.image) {
-      const arrayName = user.image.split("/");
-      const nameFile = arrayName[arrayName.length - 1];
-      const [public_id] = nameFile.split(".");
-      await destroyImageClaudinary(
-        `${folderNameApp}/${folderNameUsers}/${public_id}`
-      );
-    }
+    const arrayName = user.image.split("/");
+    const nameFile = arrayName[arrayName.length - 1];
+    const [public_id] = nameFile.split(".");
+    await destroyImageClaudinary(
+      `${folderNameApp}/${folderNameUsers}/${public_id}`
+    );
 
     const secure_url = await uploadFileClaudinary(
       tempFilePath,
@@ -332,41 +227,68 @@ export class UserController {
       user.name = name || user.name;
       user.lastname = lastname || user.lastname;
       user.phone = phone || user.phone;
-      user.address = address || user.address;
-      user.web = web || user.web;
 
       const userUpdate = await userRepository.save(user);
-      res.json(userUpdate);
+      res.json({ userUpdate, message: "Editado con exito" });
     } catch (error) {
       console.log(error);
       const e = new Error("hubo un error");
-      return res.status(400).json({ msg: e.message });
+      return res.status(400).json({ message: e.message });
+    }
+  }
+
+  async updateProfileWithoutImage(req: Request, res: Response) {
+    const { id } = req.user as IUser;
+    const { name, phone, lastname } = req.body;
+
+    if (!isUUID(id)) {
+      const e = new Error("usuario no valida");
+      return res.status(400).json({ message: e.message });
+    }
+
+    const user = await userRepository.findOneBy({ id });
+    if (!user) {
+      const e = new Error("usuario no existe");
+      return res.status(400).json({ message: e.message });
+    }
+
+    try {
+      user.name = name || user.name;
+      user.lastname = lastname || user.lastname;
+      user.phone = phone || user.phone;
+
+      const userUpdate = await userRepository.save(user);
+      res.json({ userUpdate, message: "Editado con exito" });
+    } catch (error) {
+      console.log(error);
+      const e = new Error("hubo un error");
+      return res.status(400).json({ message: e.message });
     }
   }
 
   /*********************************************************************/
 
   async updatePassword(req: Request, res: Response) {
-    // Leer los datos
     const { id } = req.user;
-    const { pwd_actual, pwd_nuevo } = req.body;
+    const { pwd_now, pwd_new } = req.body;
+    //console.log(pwd_now, pwd_new);
 
     // Comprobar que el veterinario existe
     const user = await userRepository.findOneBy({ id });
     if (!user) {
-      throw new BadRequestError("Ese email ya esta en uso");
+      throw new BadRequestError("Usuario no existe");
     }
 
-    const verifyPass = await bcrypt.compare(pwd_actual, user.password);
+    const verifyPass = await bcrypt.compare(pwd_now, user.password);
 
     if (!verifyPass) {
       throw new BadRequestError("password actual no valido");
     }
 
     try {
-      user.password = pwd_nuevo;
+      user.password = await bcrypt.hash(pwd_new, 10);
       await userRepository.save(user);
-      res.json({ msg: "Password Almacenado Con exito" });
+      res.json({ message: "Password editado Con exito" });
     } catch (error) {
       console.log(error);
       throw new BadRequestError("hubo un error");

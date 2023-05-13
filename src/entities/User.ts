@@ -11,9 +11,11 @@ import {
   BeforeInsert,
   BeforeUpdate,
   Column,
+  CreateDateColumn,
   Entity,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import generarId from "../helpers/generarId";
 import { Category } from "./Category";
@@ -30,6 +32,16 @@ export class User {
     unique: true,
   })
   email: string;
+
+  @CreateDateColumn({
+    name: "created_at",
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    name: "updated_at",
+  })
+  updateAt: Date;
 
   @IsString()
   @MinLength(6, { message: "password minimo 6 caracteres" })
@@ -89,36 +101,14 @@ export class User {
   })
   lastname: string;
 
-  @IsOptional()
-  @IsString()
-  @MinLength(1)
-  @Column("text", {
-    default: "",
-  })
-  address: string;
-
-  @IsOptional()
-  @IsString()
-  @MinLength(1)
-  @Column("text", {
-    default: "",
-  })
-  web: string;
-
   @OneToMany(() => Plate, (plate) => plate.user)
   plate: Plate;
 
   @OneToMany(() => Category, (category) => category.user)
   category: Category;
 
-  //   @OneToMany(() => Customer, (customer) => customer.user)
-  //   customer: Customer;
-
   //   @OneToMany(() => Sale, (sale) => sale.user)
   //   sale: Sale;
-
-  //   @OneToMany(() => Suplier, (suplier) => suplier.user)
-  //   suplier: Suplier;
 
   @BeforeInsert()
   checkFieldsBeforeInsert() {

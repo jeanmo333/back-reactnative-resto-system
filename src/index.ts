@@ -37,8 +37,4 @@ AppDataSource.initialize().then(() => {
   app.listen(PORT, () => {
     console.log(`Server listening on port: ${PORT}`);
   });
-
-  // app.listen(4000, "192.168.1.6" || "localhost", function () {
-  //   console.log("Aplicacion de NodeJS " + PORT + " Iniciada...");
-  // });
 });

@@ -1,5 +1,4 @@
 import { ICategory } from "./category";
-import { ISupplier } from "./supplier";
 
 export interface IPlate {
   _id?: string;
@@ -10,8 +9,7 @@ export interface IPlate {
   stock: number;
   images?: string[];
   isActive?: boolean;
-  category?: string;
-  supplier?: string;
+  category?: string | ICategory;
   user?: string;
   createdAt?: string;
   updatedAt?: string;

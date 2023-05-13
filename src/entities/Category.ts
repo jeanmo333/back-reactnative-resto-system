@@ -3,10 +3,12 @@ import {
   BeforeInsert,
   BeforeUpdate,
   Column,
+  CreateDateColumn,
   Entity,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from "typeorm";
 //import { Product } from './Product';
 import { User } from "./User";
@@ -16,6 +18,16 @@ import { Plate } from "./Plate";
 export class Category {
   @PrimaryGeneratedColumn("uuid")
   id: string;
+
+  @CreateDateColumn({
+    name: "created_at",
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    name: "updated_at",
+  })
+  updateAt: Date;
 
   @IsString()
   @MinLength(1)
@@ -31,13 +43,6 @@ export class Category {
     nullable: true,
   })
   description: string;
-
-  // @IsOptional()
-  // @IsString()
-  // @Column("text", {
-  //   default: "",
-  // })
-  // image: string;
 
   @IsOptional()
   @IsBoolean()

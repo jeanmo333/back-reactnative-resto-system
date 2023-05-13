@@ -13,12 +13,14 @@ import {
   BeforeInsert,
   BeforeUpdate,
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from "typeorm";
 import { Category } from "./Category";
 // import { Detail } from './Detail';
@@ -36,6 +38,16 @@ export class Plate {
     unique: true,
   })
   name: string;
+
+  @CreateDateColumn({
+    name: "created_at",
+  })
+  createdAt: Date;
+
+  @UpdateDateColumn({
+    name: "updated_at",
+  })
+  updateAt: Date;
 
   @IsString()
   @Column({
@@ -83,35 +95,11 @@ export class Plate {
   })
   images: string[];
 
-  // @IsOptional()
-  // @IsString()
-  // @Column("text", {
-  //   default: "",
-  // })
-  // image1: string;
-
-  // @IsOptional()
-  // @IsString()
-  // @Column("text", {
-  //   default: "",
-  // })
-  // image2: string;
-
-  // @IsOptional()
-  // @IsString()
-  // @Column("text", {
-  //   default: "",
-  // })
-  // image3: string;
-
   @ManyToOne(() => Category, (category) => category.plate, {
     onDelete: "CASCADE",
     onUpdate: "CASCADE",
   })
-  category: Category;
-
-  // @ManyToOne(() => Supplier, (supplier) => supplier.product)
-  // supplier: Supplier;
+  category: Partial<Category>;
 
   // @OneToMany(() => Detail, ( detail) =>  detail.product)
   // detail?: Detail;

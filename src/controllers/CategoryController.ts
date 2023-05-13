@@ -9,7 +9,6 @@ cloudinary.config(process.env.CLOUDINARY_URL || "");
 import { Category } from "../entities/Category";
 import { BadRequestError, UnauthorizedError } from "../helpers/api-erros";
 import { categoryRepository } from "../repositories/categoryRepository";
-import { ICategory } from "../interfaces";
 
 export class CategoryController {
   async create(req: Request, res: Response) {
@@ -23,6 +22,17 @@ export class CategoryController {
     if (categoryExist) {
       throw new BadRequestError("Categoria ya existe");
     }
+
+    delete req.user.password;
+    delete req.user.image;
+    delete req.user.createdAt;
+    delete req.user.isActive;
+    delete req.user.roles;
+    delete req.user.updateAt;
+    delete req.user.token;
+    delete req.user.phone;
+    delete req.user.lastname;
+
     const newCategory = categoryRepository.create({ name, description });
     newCategory.user = req.user;
 
@@ -44,10 +54,21 @@ export class CategoryController {
       const categories = await categoryRepository.find({
         where: {
           isActive: true,
-          user: { id: req.user.id },
         },
         take: Number(limit),
         skip: Number(offset),
+      });
+
+      categories.map((category) => {
+        delete category.user.password;
+        delete category.user.image;
+        delete category.user.createdAt;
+        delete category.user.isActive;
+        delete category.user.roles;
+        delete category.user.updateAt;
+        delete category.user.token;
+        delete category.user.phone;
+        delete category.user.lastname;
       });
 
       return res.json(categories);
@@ -67,21 +88,28 @@ export class CategoryController {
       if (!isUUID(term)) throw new BadRequestError("Categoria no valida");
 
       category = await categoryRepository.findOne({
-        where: { id: term, user: { id: req.user.id } },
+        where: { id: term },
       });
     } else {
       category = await categoryRepository.findOne({
-        where: { name: term.toLowerCase(), user: { id: req.user.id } },
+        where: { name: term.toLowerCase() },
       });
     }
 
     if (!category) throw new BadRequestError("Categoria no existe");
 
-    if (category.user.id !== req.user.id)
-      throw new UnauthorizedError("acceso no permitido");
-
     if (category.isActive === false)
       throw new BadRequestError("category is not active");
+
+    delete category.user.password;
+    delete category.user.image;
+    delete category.user.createdAt;
+    delete category.user.isActive;
+    delete category.user.roles;
+    delete category.user.updateAt;
+    delete category.user.token;
+    delete category.user.phone;
+    delete category.user.lastname;
 
     return res.json(category);
   }
@@ -97,9 +125,6 @@ export class CategoryController {
     const category = await categoryRepository.findOneBy({ id });
     if (!category) throw new BadRequestError("Categoria no existe");
 
-    if (category.user.id !== req.user.id)
-      throw new UnauthorizedError("acceso no permitido");
-
     category.name = name || category.name;
     category.isActive = isActive || category.isActive;
     category.description = description || category.description;
@@ -108,6 +133,17 @@ export class CategoryController {
       await categoryRepository.save(category);
 
       const categoryUpdate = await categoryRepository.findOneBy({ id });
+
+      delete categoryUpdate!.user.password;
+      delete categoryUpdate!.user.image;
+      delete categoryUpdate!.user.createdAt;
+      delete categoryUpdate!.user.isActive;
+      delete categoryUpdate!.user.roles;
+      delete categoryUpdate!.user.updateAt;
+      delete categoryUpdate!.user.token;
+      delete categoryUpdate!.user.phone;
+      delete categoryUpdate!.user.lastname;
+
       return res.json({ categoryUpdate, message: "Editado con exito" });
     } catch (error) {
       console.log(error);
