@@ -29,13 +29,17 @@ export class UserController {
       req.body.user
     ) as IUser;
 
+    const emailToLowerCase = email.toLowerCase();
+
     const { tempFilePath } = req.files!.archive as any;
 
-    if ([name, email, password].includes("")) {
+    if ([name, emailToLowerCase, password].includes("")) {
       throw new BadRequestError("Hay Campo vacio");
     }
 
-    const userExists = await userRepository.findOneBy({ email });
+    const userExists = await userRepository.findOneBy({
+      email: emailToLowerCase,
+    });
 
     if (userExists) {
       throw new BadRequestError("Usuario ya existe");
@@ -45,7 +49,7 @@ export class UserController {
 
     const newUser = userRepository.create({
       name,
-      email,
+      email: emailToLowerCase,
       password: hashPassword,
     });
 
@@ -66,11 +70,13 @@ export class UserController {
   async login(req: Request, res: Response) {
     const { email = "", password = "" } = req.body;
 
-    if ([email, password].includes("")) {
+    const emailToLowerCase = email.toLowerCase();
+
+    if ([emailToLowerCase, password].includes("")) {
       throw new BadRequestError("Hay Campo vacio");
     }
 
-    const user = await userRepository.findOneBy({ email });
+    const user = await userRepository.findOneBy({ email: emailToLowerCase });
 
     if (!user) {
       throw new BadRequestError("Email o password no valido");
@@ -131,7 +137,11 @@ export class UserController {
   async forgetPassword(req: Request, res: Response) {
     const { email } = req.body;
 
-    const userExist = await userRepository.findOneBy({ email });
+    const emailToLowerCase = email.toLowerCase();
+
+    const userExist = await userRepository.findOneBy({
+      email: emailToLowerCase,
+    });
     if (!userExist) {
       throw new BadRequestError("El Usuario no existe");
     }

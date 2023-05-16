@@ -35,10 +35,12 @@ export class PlateController {
       idCategory = "",
     } = JSON.parse(req.body.plate);
 
+    const nameToLowerCase = name.toLowerCase();
+
     let plateSave: any;
     let inserts = 0;
 
-    if ([name, idCategory].includes("")) {
+    if ([nameToLowerCase, idCategory].includes("")) {
       throw new BadRequestError("Hay Campo vacio");
     }
 
@@ -46,7 +48,9 @@ export class PlateController {
       throw new BadRequestError("maximo 3 imagenes");
     }
 
-    const plateName = await plateRepository.findOneBy({ name });
+    const plateName = await plateRepository.findOneBy({
+      name: nameToLowerCase,
+    });
     if (plateName) {
       throw new BadRequestError("Plato ya existe");
     }
@@ -68,7 +72,7 @@ export class PlateController {
     delete req.user.lastname;
 
     const newPlate = plateRepository.create({
-      name,
+      name: nameToLowerCase,
       description,
       prepared_price,
       sale_price,

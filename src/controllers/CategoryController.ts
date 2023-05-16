@@ -14,11 +14,15 @@ export class CategoryController {
   async create(req: Request, res: Response) {
     const { name = "", description = "" } = req.body;
 
-    if ([name, description].includes("")) {
+    const nameToLowerCase = name.toLowerCase();
+
+    if ([nameToLowerCase, description].includes("")) {
       throw new BadRequestError("Hay Campo vacio");
     }
 
-    const categoryExist = await categoryRepository.findOneBy({ name });
+    const categoryExist = await categoryRepository.findOneBy({
+      name: nameToLowerCase,
+    });
     if (categoryExist) {
       throw new BadRequestError("Categoria ya existe");
     }
@@ -33,7 +37,10 @@ export class CategoryController {
     delete req.user.phone;
     delete req.user.lastname;
 
-    const newCategory = categoryRepository.create({ name, description });
+    const newCategory = categoryRepository.create({
+      name: nameToLowerCase,
+      description,
+    });
     newCategory.user = req.user;
 
     try {
@@ -118,6 +125,7 @@ export class CategoryController {
 
   async update(req: Request, res: Response) {
     const { name, description, isActive } = req.body;
+    const nameToLowerCase = name.toLowerCase();
     const { id } = req.params;
 
     if (!isUUID(id)) throw new BadRequestError("Categoria no valida");
@@ -125,7 +133,7 @@ export class CategoryController {
     const category = await categoryRepository.findOneBy({ id });
     if (!category) throw new BadRequestError("Categoria no existe");
 
-    category.name = name || category.name;
+    category.name = nameToLowerCase || category.name;
     category.isActive = isActive || category.isActive;
     category.description = description || category.description;
 
