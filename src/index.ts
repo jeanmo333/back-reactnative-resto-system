@@ -9,6 +9,7 @@ import { errorMiddleware } from "./middlewares/error";
 import userRoutes from "./routes/userRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
 import plateRoutes from "./routes/plateRoutes";
+import addressRoutes from "./routes/addressRoutes";
 
 AppDataSource.initialize().then(() => {
   const PORT = process.env.PORT || 3000;
@@ -31,6 +32,7 @@ AppDataSource.initialize().then(() => {
   app.use("/api/users", userRoutes);
   app.use("/api/categories", categoryRoutes);
   app.use("/api/plates", plateRoutes);
+  app.use("/api/addresses", addressRoutes);
 
   app.use(errorMiddleware);
 

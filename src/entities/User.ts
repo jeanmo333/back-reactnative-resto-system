@@ -20,6 +20,7 @@ import {
 import generarId from "../helpers/generarId";
 import { Category } from "./Category";
 import { Plate } from "./Plate";
+import { Address } from "./Address";
 
 @Entity("users")
 export class User {
@@ -106,6 +107,9 @@ export class User {
 
   @OneToMany(() => Category, (category) => category.user)
   category: Category;
+
+  @OneToMany(() => Address, (address) => address.user)
+  address: Address;
 
   //   @OneToMany(() => Sale, (sale) => sale.user)
   //   sale: Sale;

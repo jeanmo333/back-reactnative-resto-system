@@ -1,7 +1,7 @@
 import { ICategory } from "./category";
 
 export interface IPlate {
-  _id?: string;
+  id?: string;
   name: string;
   description?: string;
   prepared_price: number;
