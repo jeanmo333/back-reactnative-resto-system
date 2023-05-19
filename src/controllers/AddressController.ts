@@ -19,16 +19,26 @@ export class AddressController {
       number = "",
       city = "",
       phone = "",
-      state = "",
+      commune = "",
       country = "",
+      firstname = "",
+      lastname = "",
     } = req.body as IAddress;
 
     const titleToLowerCase = title.toLowerCase();
 
     if (
-      [titleToLowerCase, street, number, city, phone, state, country].includes(
-        ""
-      )
+      [
+        titleToLowerCase,
+        street,
+        number,
+        city,
+        phone,
+        commune,
+        country,
+        firstname,
+        lastname,
+      ].includes("")
     ) {
       throw new BadRequestError("Hay Campo vacio");
     }
@@ -56,8 +66,10 @@ export class AddressController {
       number,
       city,
       phone,
-      state,
+      commune,
       country,
+      firstname,
+      lastname,
     });
     newAddress.user = req.user;
 
@@ -145,8 +157,10 @@ export class AddressController {
       number,
       city,
       phone,
-      state,
+      commune,
       country,
+      firstname,
+      lastname,
     } = req.body as IAddress;
     const titleToLowerCase = title.toLowerCase();
     const { id } = req.params;
@@ -161,8 +175,10 @@ export class AddressController {
     address.number = number || address.number;
     address.city = city || address.city;
     address.phone = phone || address.phone;
-    address.state = state || address.state;
+    address.commune = commune || address.commune;
     address.country = country || address.country;
+    address.firstname = firstname || address.firstname;
+    address.lastname = lastname || address.lastname;
 
     try {
       await addressRepository.save(address);

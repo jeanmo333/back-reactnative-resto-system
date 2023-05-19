@@ -16,40 +16,41 @@ export class Address {
   @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @IsOptional()
   @IsString()
   @Column("text")
   title: string;
 
-  @IsOptional()
   @IsString()
   @Column("text")
   street: string;
 
   @IsString()
-  @IsOptional()
   @Column("text")
   number: string;
 
-  @IsOptional()
   @IsString()
   @Column("text")
   city: string;
 
-  @IsOptional()
   @IsString()
   @Column("text")
   phone: string;
 
-  @IsOptional()
   @IsString()
   @Column("text")
-  state: string;
+  commune: string;
 
-  @IsOptional()
   @IsString()
   @Column("text")
   country: string;
+
+  @IsString()
+  @Column("text")
+  firstname: string;
+
+  @IsString()
+  @Column("text")
+  lastname: string;
 
   @ManyToOne(() => User, (user) => user.address, { eager: true })
   user: Partial<User>;

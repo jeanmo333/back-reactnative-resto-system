@@ -6,8 +6,10 @@ export interface IAddress {
   street: string;
   number: string;
   city: string;
+  firstname: string;
+  lastname: string;
   phone: string;
-  state: string;
+  commune: string;
   country: string;
   user: Partial<User>;
 
