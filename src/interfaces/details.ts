@@ -1,5 +1,9 @@
+import { IOrder } from "./order";
+import { IPlate } from "./plate";
+
 export interface IDetails {
-    product: string;
-    quantity: number;
-  }
-  
+  plate: IPlate;
+  subtotal: number;
+  order: IOrder;
+  quantity: number;
+}

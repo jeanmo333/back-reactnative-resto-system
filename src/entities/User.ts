@@ -21,6 +21,7 @@ import generarId from "../helpers/generarId";
 import { Category } from "./Category";
 import { Plate } from "./Plate";
 import { Address } from "./Address";
+import { Order } from "./Order";
 
 @Entity("users")
 export class User {
@@ -111,8 +112,8 @@ export class User {
   @OneToMany(() => Address, (address) => address.user)
   address: Address;
 
-  //   @OneToMany(() => Sale, (sale) => sale.user)
-  //   sale: Sale;
+  @OneToMany(() => Order, (order) => order.user)
+  order: Order;
 
   @BeforeInsert()
   checkFieldsBeforeInsert() {

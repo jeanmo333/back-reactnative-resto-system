@@ -24,8 +24,8 @@ import {
 } from "typeorm";
 import { Category } from "./Category";
 // import { Detail } from './Detail';
-// import { Supplier } from './Supplier';
 import { User } from "./User";
+import { Detail } from "./Detail";
 
 @Entity("plates")
 export class Plate {
@@ -101,8 +101,8 @@ export class Plate {
   })
   category: Partial<Category>;
 
-  // @OneToMany(() => Detail, ( detail) =>  detail.product)
-  // detail?: Detail;
+  @OneToMany(() => Detail, (detail) => detail.plate)
+  detail?: Detail;
 
   @ManyToOne(() => User, (user) => user.plate, { eager: true })
   user: Partial<User>;
