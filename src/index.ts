@@ -36,7 +36,7 @@ AppDataSource.initialize().then(() => {
   app.use("/api/addresses", addressRoutes);
   app.use("/api/orders", orderRoutes);
 
-  // app.use(errorMiddleware);
+  app.use(errorMiddleware);
 
   app.listen(PORT, () => {
     console.log(`Server listening on port: ${PORT}`);

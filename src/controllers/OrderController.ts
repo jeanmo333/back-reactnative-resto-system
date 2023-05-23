@@ -10,6 +10,7 @@ import { BadRequestError, UnauthorizedError } from "../helpers/api-erros";
 import { categoryRepository } from "../repositories/categoryRepository";
 import asyncForeach from "../helpers/async_foreach";
 import { plateRepository } from "../repositories/plateRepository";
+
 import { Plate } from "../entities/Plate";
 import {
   destroyImageClaudinary,
@@ -19,174 +20,117 @@ import {
 } from "../helpers/claudinary";
 import { addressRepository } from "../repositories/addressRepository";
 import { IPlateTemp } from "../interfaces/plateTemp";
+import { IDetails } from "../interfaces";
+import { Detail } from "../entities/Detail";
+import { Order } from "../entities/Order";
+import { orderRepository } from "../repositories/orderRepository";
+import { detailRepository } from "../repositories/detailRepository";
+
+function calcPrice(price: number, quantity: number) {
+  return price * quantity;
+}
 
 export class OrderController {
+  detailRepository: any;
   async create(req: Request, res: Response) {
-    // console.log(req.body);
-
     const { details, idAddress } = req.body;
-
-    // const response = await addressRepository.findOneBy({ id: idAddress });
-    // console.log(response);
-    let platesTemp: IPlateTemp[] = [];
+    let detailToSave: IDetails[] = [];
     let total = 0;
     let subtotal = 0;
+
+    const address = await addressRepository.findOneBy({ id: idAddress });
+    if (!address) throw new BadRequestError("Address no existe");
+
     for await (const item of details) {
       const response = await plateRepository.findOneBy({ id: item.idProduct });
-      // response.quantity = product.quantity;
-      // subtotal = response?.sale_price! * item.quantity;
-      // total += subtotal;
-      platesTemp.push({
+      subtotal = calcPrice(response?.sale_price!, item.quantity);
+      total += subtotal;
+
+      detailToSave.push({
         id: response!.id,
-        name: response!.name,
-        description: response!.description,
-        prepared_price: response!.prepared_price,
-        sale_price: response!.sale_price,
-        stock: response!.stock,
         quantity: item.quantity,
+        subtotal: calcPrice(response?.sale_price!, item.quantity),
       });
-      // console.log(plateTemp);
     }
 
-    platesTemp.map((plate) => {
-      subtotal = plate.sale_price * plate.quantity;
+    const newDetailOrder = detailToSave.map((detail: any) => {
+      const detailDb = new Detail();
+      detailDb.plate = detail.id;
+      detailDb.quantity = detail.quantity;
+      detailDb.subtotal = detail.subtotal;
+      return detailDb;
     });
-    console.log(subtotal);
-    //console.log(total);
-    //console.log(JSON.parse(req.body.plate));
-    //console.log(req.files!.archives);
-    // const archives = req.files!.archives as any;
-    // const tempFilePaths = archives.map((archive: any) => archive.tempFilePath);
-    // const {
-    //   name = "",
-    //   description = "",
-    //   prepared_price = 0,
-    //   sale_price = 0,
-    //   stock = 0,
-    //   idCategory = "",
-    // } = JSON.parse(req.body.plate);
-    // const nameToLowerCase = name.toLowerCase();
-    // let plateSave: any;
-    // let inserts = 0;
-    // if ([nameToLowerCase, idCategory].includes("")) {
-    //   throw new BadRequestError("Hay Campo vacio");
-    // }
-    // if (archives.length > 3) {
-    //   throw new BadRequestError("maximo 3 imagenes");
-    // }
-    // const plateName = await plateRepository.findOneBy({
-    //   name: nameToLowerCase,
-    // });
-    // if (plateName) {
-    //   throw new BadRequestError("Plato ya existe");
-    // }
-    // const category = await categoryRepository.findOneBy({ id: idCategory });
-    // if (!category) {
-    //   throw new BadRequestError("Categoria no existe");
-    // }
-    // //delete some user column
-    // delete req.user.password;
-    // delete req.user.image;
-    // delete req.user.createdAt;
-    // delete req.user.isActive;
-    // delete req.user.roles;
-    // delete req.user.updateAt;
-    // delete req.user.token;
-    // delete req.user.phone;
-    // delete req.user.lastname;
-    // const newPlate = plateRepository.create({
-    //   name: nameToLowerCase,
-    //   description,
-    //   prepared_price,
-    //   sale_price,
-    //   stock,
-    //   category,
-    // });
-    // newPlate.user = req.user;
-    // try {
-    //   plateSave = await plateRepository.save(newPlate);
-    //   //delete some category column
-    //   delete plateSave.category.createdAt;
-    //   delete plateSave.category.updateAt;
-    //   delete plateSave.category.isActive;
-    //   delete plateSave.category.user;
-    //   delete plateSave.category.user;
-    //   const start = async () => {
-    //     await asyncForeach(tempFilePaths, async (archive: any) => {
-    //       const secure_url = await uploadFileClaudinary(
-    //         archive,
-    //         `${folderNameApp}/${folderNamePlates}`
-    //       );
-    //       if (secure_url != undefined && secure_url != null) {
-    //         // CREO LA IMAGEN EN CLAUDINARY
-    //         if (inserts == 0) {
-    //           plateSave.images = [...plateSave.images, secure_url];
-    //         } else if (inserts == 1) {
-    //           plateSave.images = [...plateSave.images, secure_url];
-    //         } else if (inserts == 2) {
-    //           plateSave.images = [...plateSave.images, secure_url];
-    //         }
-    //       }
-    //       await plateRepository.update(
-    //         { id: plateSave.id },
-    //         { images: plateSave.images }
-    //       );
-    //       inserts = inserts + 1;
-    //       if (inserts == tempFilePaths.length) {
-    //         // TERMINO DE ALAMACENAR LAS TRES IMAGENES
-    //         return res.status(201).json({
-    //           plateSave,
-    //           message: "Creado con exito",
-    //         });
-    //       }
-    //     });
-    //   };
-    //   start();
-    // } catch (error) {
-    //   console.log(error);
-    //   throw new BadRequestError("revisar log servidor");
-    // }
+
+    delete req.user.password;
+    delete req.user.image;
+    delete req.user.createdAt;
+    delete req.user.isActive;
+    delete req.user.roles;
+    delete req.user.updateAt;
+    delete req.user.token;
+    delete req.user.phone;
+    delete req.user.lastname;
+
+    try {
+      await detailRepository.save(newDetailOrder);
+      const order = new Order();
+      order.user = req.user;
+      order.total = total;
+      order.address = address;
+      order.details = newDetailOrder as any;
+
+      const savedOrder = await orderRepository.save(order);
+
+      delete savedOrder.address.user;
+      return res
+        .status(201)
+        .json({ savedOrder, message: "Pedido completado con exito" });
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   //********************************************************************** */
 
-  // async findAll(req: Request, res: Response) {
-  //   const { limit = 10, offset = 0 } = req.query;
+  async findAll(req: Request, res: Response) {
+    const { limit = 10, offset = 0 } = req.query;
 
-  //   try {
-  //     const plates = await plateRepository.find({
-  //       where: {
-  //         isActive: true,
-  //       },
-  //       relations: {
-  //         category: true,
-  //       },
-  //       take: Number(limit),
-  //       skip: Number(offset),
-  //     });
+    try {
+      const orders = await orderRepository.find({
+        where: {
+          user: { id: req.user.id },
+        },
+        relations: {
+          details: {
+            plate: true,
+          },
+        },
+        take: Number(limit),
+        skip: Number(offset),
+      });
 
-  //     plates.map((plate) => {
-  //       delete plate.user.password;
-  //       delete plate.user.image;
-  //       delete plate.user.createdAt;
-  //       delete plate.user.isActive;
-  //       delete plate.user.roles;
-  //       delete plate.user.updateAt;
-  //       delete plate.user.token;
-  //       delete plate.user.phone;
-  //       delete plate.user.lastname;
-  //       delete plate.category.createdAt;
-  //       delete plate.category.updateAt;
-  //       delete plate.category.isActive;
-  //       delete plate.category.user;
-  //     });
+      orders.map((order) => {
+        delete order.user.password;
+        delete order.user.image;
+        delete order.user.createdAt;
+        delete order.user.isActive;
+        delete order.user.roles;
+        delete order.user.updateAt;
+        delete order.user.token;
+        delete order.user.phone;
+        delete order.user.lastname;
+        delete order.address.user;
+        order.details.map((detail) => {
+          delete detail.plate.user;
+        });
+      });
 
-  //     return res.json(plates);
-  //   } catch (error) {
-  //     console.log(error);
-  //     throw new BadRequestError("revisar log servidor");
-  //   }
-  // }
+      return res.json(orders);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestError("revisar log servidor");
+    }
+  }
 
   // //********************************************************************** */
 
@@ -234,50 +178,44 @@ export class OrderController {
 
   // //********************************************************************** */
 
-  // async update(req: Request, res: Response) {
-  //   const { idCategory, ...rest } = req.body;
-  //   const { id } = req.params;
+  async updateStatus(req: Request, res: Response) {
+    const validStatus = ["RECIBIDO", "PREPARANDO", "DESPACHADO", "ENTEGRADO"];
+    const { status } = req.body;
+    const { id } = req.params;
 
-  //   if (!isUUID(id)) throw new BadRequestError("Plato no valido");
+    if (!isUUID(id)) throw new BadRequestError("Order no valido");
 
-  //   const plate = await plateRepository.findOneBy({ id });
-  //   if (!plate) throw new BadRequestError("Platillo no existe");
+    const orderExist = await orderRepository.findOneBy({ id });
+    if (!orderExist) throw new BadRequestError("Order no existe");
 
-  //   const category = await categoryRepository.findOneBy({ id: idCategory });
-  //   if (!category) throw new BadRequestError("Categoria no existe");
-  //   plate.category = category;
+    if (!validStatus.includes(status)) {
+      throw new BadRequestError("Estado no valido");
+    }
 
-  //   try {
-  //     await plateRepository.update(id, rest);
+    try {
+      await orderRepository.update(id, { status });
 
-  //     const plateUpdate = await plateRepository.findOne({
-  //       where: { id },
-  //       relations: {
-  //         category: true,
-  //       },
-  //     });
+      const orderUpdate = await orderRepository.findOne({
+        where: { id, user: { id: req.user.id } },
+      });
 
-  //     delete plateUpdate!.user.password;
-  //     delete plateUpdate!.user.image;
-  //     delete plateUpdate!.user.createdAt;
-  //     delete plateUpdate!.user.isActive;
-  //     delete plateUpdate!.user.roles;
-  //     delete plateUpdate!.user.updateAt;
-  //     delete plateUpdate!.user.token;
-  //     delete plateUpdate!.user.phone;
-  //     delete plateUpdate!.user.lastname;
+      delete orderUpdate!.user.password;
+      delete orderUpdate!.user.image;
+      delete orderUpdate!.user.createdAt;
+      delete orderUpdate!.user.isActive;
+      delete orderUpdate!.user.roles;
+      delete orderUpdate!.user.updateAt;
+      delete orderUpdate!.user.token;
+      delete orderUpdate!.user.phone;
+      delete orderUpdate!.user.lastname;
+      delete orderUpdate!.address.user;
 
-  //     delete plateUpdate!.category.createdAt;
-  //     delete plateUpdate!.category.updateAt;
-  //     delete plateUpdate!.category.isActive;
-  //     delete plateUpdate!.category.user;
-
-  //     return res.json({ plateUpdate, message: "Editado con exito" });
-  //   } catch (error) {
-  //     console.log(error);
-  //     throw new BadRequestError("revisar log servidor");
-  //   }
-  // }
+      return res.json({ orderUpdate, message: "Editado con exito" });
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestError("revisar log servidor");
+    }
+  }
 
   // async remove(req: Request, res: Response) {
   //   const { id } = req.params;

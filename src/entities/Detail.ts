@@ -21,7 +21,7 @@ export class Detail {
     onDelete: "CASCADE",
     onUpdate: "CASCADE",
   })
-  plate: Plate;
+  plate: Partial<Plate>;
 
   @ManyToOne(() => Order, (order) => order.details, {
     onDelete: "CASCADE",

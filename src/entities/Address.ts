@@ -6,10 +6,12 @@ import {
   CreateDateColumn,
   Entity,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { User } from "./User";
+import { Order } from "./Order";
 
 @Entity("addresses")
 export class Address {
@@ -54,6 +56,9 @@ export class Address {
 
   @ManyToOne(() => User, (user) => user.address, { eager: true })
   user: Partial<User>;
+
+  @OneToMany(() => Order, (order) => order.address)
+  order?: Order;
 
   @CreateDateColumn({
     name: "created_at",

@@ -10,6 +10,7 @@ import {
 } from "typeorm";
 import { User } from "./User";
 import { Detail } from "./Detail";
+import { Address } from "./Address";
 
 @Entity("orders")
 export class Order {
@@ -36,6 +37,11 @@ export class Order {
   })
   profit: number;
 
+  @Column("text", {
+    default: "RECIBIDO",
+  })
+  status: string;
+
   @OneToMany(() => Detail, (detail) => detail.order, {
     cascade: true,
   })
@@ -43,5 +49,8 @@ export class Order {
   details: Detail[];
 
   @ManyToOne(() => User, (user) => user.order, { eager: true })
-  user: User;
+  user: Partial<User>;
+
+  @ManyToOne(() => Address, (address) => address.order, { eager: true })
+  address: Partial<Address>;
 }

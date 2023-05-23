@@ -2,8 +2,9 @@ import { IOrder } from "./order";
 import { IPlate } from "./plate";
 
 export interface IDetails {
-  plate: IPlate;
+  id?: string;
+  plate?: IPlate;
   subtotal: number;
-  order: IOrder;
+  order?: IOrder;
   quantity: number;
 }
