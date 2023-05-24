@@ -43,8 +43,11 @@ export class AddressController {
       throw new BadRequestError("Hay Campo vacio");
     }
 
-    const addressExist = await addressRepository.findOneBy({
-      title: titleToLowerCase,
+    const addressExist = await addressRepository.findOne({
+      where: {
+        user: { id: req.user.id },
+        title: titleToLowerCase,
+      },
     });
     if (addressExist) {
       throw new BadRequestError("direccion ya existe");

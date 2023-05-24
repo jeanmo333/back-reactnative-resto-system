@@ -42,6 +42,11 @@ export class Order {
   })
   status: string;
 
+  @Column("text", {
+    default: "",
+  })
+  idPayment: string;
+
   @OneToMany(() => Detail, (detail) => detail.order, {
     cascade: true,
   })

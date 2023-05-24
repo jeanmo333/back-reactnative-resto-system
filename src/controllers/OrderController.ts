@@ -1,25 +1,9 @@
-import { isUUID, MinLength } from "class-validator";
+import { isUUID } from "class-validator";
 import { Request, Response } from "express";
-
-import * as dotenv from "dotenv";
-dotenv.config();
-import { v2 as cloudinary } from "cloudinary";
-cloudinary.config(process.env.CLOUDINARY_URL || "");
-
-import { BadRequestError, UnauthorizedError } from "../helpers/api-erros";
-import { categoryRepository } from "../repositories/categoryRepository";
-import asyncForeach from "../helpers/async_foreach";
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+import { BadRequestError } from "../helpers/api-erros";
 import { plateRepository } from "../repositories/plateRepository";
-
-import { Plate } from "../entities/Plate";
-import {
-  destroyImageClaudinary,
-  folderNameApp,
-  folderNamePlates,
-  uploadFileClaudinary,
-} from "../helpers/claudinary";
 import { addressRepository } from "../repositories/addressRepository";
-import { IPlateTemp } from "../interfaces/plateTemp";
 import { IDetails } from "../interfaces";
 import { Detail } from "../entities/Detail";
 import { Order } from "../entities/Order";
@@ -31,9 +15,10 @@ function calcPrice(price: number, quantity: number) {
 }
 
 export class OrderController {
-  detailRepository: any;
   async create(req: Request, res: Response) {
-    const { details, idAddress } = req.body;
+    // console.log(req.body);
+
+    const { details, idAddress, idClientStripe } = req.body;
     let detailToSave: IDetails[] = [];
     let total = 0;
     let subtotal = 0;
@@ -52,6 +37,13 @@ export class OrderController {
         subtotal: calcPrice(response?.sale_price!, item.quantity),
       });
     }
+
+    const charge = await stripe.charges.create({
+      amount: total,
+      currency: "clp",
+      source: idClientStripe,
+      description: `ID Usuario: ${req.user.id}`,
+    });
 
     const newDetailOrder = detailToSave.map((detail: any) => {
       const detailDb = new Detail();
@@ -77,7 +69,7 @@ export class OrderController {
       order.user = req.user;
       order.total = total;
       order.address = address;
-      order.details = newDetailOrder as any;
+      (order.idPayment = charge.id), (order.details = newDetailOrder as any);
 
       const savedOrder = await orderRepository.save(order);
 
@@ -93,6 +85,43 @@ export class OrderController {
   //********************************************************************** */
 
   async findAll(req: Request, res: Response) {
+    const { limit = 10, offset = 0 } = req.query;
+
+    try {
+      const orders = await orderRepository.find({
+        relations: {
+          details: {
+            plate: true,
+          },
+        },
+        take: Number(limit),
+        skip: Number(offset),
+      });
+
+      orders.map((order) => {
+        delete order.user.password;
+        delete order.user.image;
+        delete order.user.createdAt;
+        delete order.user.isActive;
+        delete order.user.roles;
+        delete order.user.updateAt;
+        delete order.user.token;
+        delete order.user.phone;
+        delete order.user.lastname;
+        delete order.address.user;
+        order.details.map((detail) => {
+          delete detail.plate.user;
+        });
+      });
+
+      return res.json(orders);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestError("revisar log servidor");
+    }
+  }
+
+  async findMyOrders(req: Request, res: Response) {
     const { limit = 10, offset = 0 } = req.query;
 
     try {
@@ -195,9 +224,7 @@ export class OrderController {
     try {
       await orderRepository.update(id, { status });
 
-      const orderUpdate = await orderRepository.findOne({
-        where: { id, user: { id: req.user.id } },
-      });
+      const orderUpdate = await orderRepository.findOneBy({ id });
 
       delete orderUpdate!.user.password;
       delete orderUpdate!.user.image;

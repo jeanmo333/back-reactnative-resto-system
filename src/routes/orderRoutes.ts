@@ -12,6 +12,7 @@ const upload = multer({
 router.use(authMiddleware);
 router.post("/", new OrderController().create);
 router.get("/", new OrderController().findAll);
+router.get("/my-orders", new OrderController().findMyOrders);
 // router.get("/:term", new PlateController().findOne);
 // router.patch("/:id", new OrderController().update);
 router.patch("/update-status/:id", new OrderController().updateStatus);
