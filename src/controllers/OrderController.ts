@@ -208,7 +208,7 @@ export class OrderController {
   // //********************************************************************** */
 
   async updateStatus(req: Request, res: Response) {
-    const validStatus = ["RECIBIDO", "PREPARANDO", "DESPACHADO", "ENTEGRADO"];
+    const validStatus = ["RECIBIDO", "PREPARANDO", "EN CAMINO", "ENTEGRADO"];
     const { status } = req.body;
     const { id } = req.params;
 
@@ -237,7 +237,7 @@ export class OrderController {
       delete orderUpdate!.user.lastname;
       delete orderUpdate!.address.user;
 
-      return res.json({ orderUpdate, message: "Editado con exito" });
+      return res.json({ orderUpdate, message: "Estado cambiado con exito" });
     } catch (error) {
       console.log(error);
       throw new BadRequestError("revisar log servidor");
