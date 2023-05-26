@@ -9,6 +9,7 @@ import { Detail } from "../entities/Detail";
 import { Order } from "../entities/Order";
 import { orderRepository } from "../repositories/orderRepository";
 import { detailRepository } from "../repositories/detailRepository";
+import { Between } from "typeorm";
 
 function calcPrice(price: number, quantity: number) {
   return price * quantity;
@@ -88,6 +89,7 @@ export class OrderController {
     const { limit = 10, offset = 0 } = req.query;
 
     try {
+      const numberOfOrders = await orderRepository.count();
       const orders = await orderRepository.find({
         relations: {
           details: {
@@ -98,23 +100,23 @@ export class OrderController {
         skip: Number(offset),
       });
 
-      orders.map((order) => {
-        delete order.user.password;
-        delete order.user.image;
-        delete order.user.createdAt;
-        delete order.user.isActive;
-        delete order.user.roles;
-        delete order.user.updateAt;
-        delete order.user.token;
-        delete order.user.phone;
-        delete order.user.lastname;
-        delete order.address.user;
-        order.details.map((detail) => {
-          delete detail.plate.user;
-        });
-      });
+      // orders.map((order) => {
+      //   delete order.user.password;
+      //   delete order.user.image;
+      //   delete order.user.createdAt;
+      //   delete order.user.isActive;
+      //   delete order.user.roles;
+      //   delete order.user.updateAt;
+      //   delete order.user.token;
+      //   delete order.user.phone;
+      //   delete order.user.lastname;
+      //   delete order.address.user;
+      //   order.details.map((detail) => {
+      //     delete detail.plate.user;
+      //   });
+      // });
 
-      return res.json(orders);
+      return res.json({ orders, numberOfOrders });
     } catch (error) {
       console.log(error);
       throw new BadRequestError("revisar log servidor");
@@ -125,6 +127,12 @@ export class OrderController {
     const { limit = 10, offset = 0 } = req.query;
 
     try {
+      const numberOfMyOrders = await orderRepository.count({
+        where: {
+          user: { id: req.user.id },
+        },
+      });
+
       const orders = await orderRepository.find({
         where: {
           user: { id: req.user.id },
@@ -154,56 +162,130 @@ export class OrderController {
         });
       });
 
-      return res.json(orders);
+      return res.json({ orders, numberOfMyOrders });
     } catch (error) {
       console.log(error);
       throw new BadRequestError("revisar log servidor");
     }
   }
 
+  async getOrdersByDay(req: Request, res: Response) {
+    const { date } = req.params;
+    const parsedDate = new Date(date);
+    const startDate = new Date(
+      parsedDate.getFullYear(),
+      parsedDate.getMonth(),
+      parsedDate.getDate()
+    ); // inicio del día
+    const endDate = new Date(
+      parsedDate.getFullYear(),
+      parsedDate.getMonth(),
+      parsedDate.getDate() + 1
+    ); // fin del día
+
+    try {
+      const numberOfDayOrders = await orderRepository.count({
+        where: {
+          createdAt: Between(startDate, endDate),
+        },
+      });
+
+      const ordersDay = await orderRepository.find({
+        where: {
+          createdAt: Between(startDate, endDate),
+        },
+      });
+
+      ordersDay.map((order) => {
+        delete order.user.password;
+        delete order.user.image;
+        delete order.user.createdAt;
+        delete order.user.isActive;
+        delete order.user.roles;
+        delete order.user.updateAt;
+        delete order.user.token;
+        delete order.user.phone;
+        delete order.user.lastname;
+        delete order.address.user;
+      });
+
+      return res.json({ ordersDay, numberOfDayOrders });
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestError("revisar log servidor");
+    }
+  }
+
+  async getOrdersByMonth(req: Request, res: Response) {
+    const { month, year } = req.params;
+    const monthNumber = Number(month);
+    const yearNumber = Number(year);
+
+    const startDate = new Date(yearNumber, monthNumber - 1, 1); // inicio del mes
+    const endDate = new Date(yearNumber, monthNumber, 0); // fin del mes
+
+    try {
+      const numberOfMonthOrders = await orderRepository.count({
+        where: {
+          createdAt: Between(startDate, endDate),
+        },
+      });
+
+      const ordersMonth = await orderRepository.find({
+        where: {
+          createdAt: Between(startDate, endDate),
+        },
+      });
+
+      ordersMonth.map((order) => {
+        delete order.user.password;
+        delete order.user.image;
+        delete order.user.createdAt;
+        delete order.user.isActive;
+        delete order.user.roles;
+        delete order.user.updateAt;
+        delete order.user.token;
+        delete order.user.phone;
+        delete order.user.lastname;
+        delete order.address.user;
+      });
+      return res.json({ ordersMonth, numberOfMonthOrders });
+    } catch (error) {}
+  }
+
   // //********************************************************************** */
 
-  // async findOne(req: Request, res: Response) {
-  //   const { term } = req.params;
-  //   let plate: Plate | null;
+  async findOne(req: Request, res: Response) {
+    const { id } = req.params;
+    let order: Order | null;
 
-  //   if (isUUID(term)) {
-  //     plate = await plateRepository.findOne({
-  //       where: { id: term },
-  //       relations: {
-  //         category: true,
-  //       },
-  //     });
-  //   } else {
-  //     plate = await plateRepository.findOne({
-  //       where: { name: term.toLowerCase() },
-  //       relations: {
-  //         category: true,
-  //       },
-  //     });
-  //   }
+    order = await orderRepository.findOne({
+      where: { id },
+      relations: {
+        details: {
+          plate: true,
+        },
+      },
+    });
 
-  //   if (!plate) throw new BadRequestError("Plato no existe");
+    if (!order) throw new BadRequestError("Orden no existe");
 
-  //   if (plate.isActive === false)
-  //     throw new BadRequestError("plato no esta activo");
+    delete order.user.password;
+    delete order.user.image;
+    delete order.user.createdAt;
+    delete order.user.isActive;
+    delete order.user.roles;
+    delete order.user.updateAt;
+    delete order.user.token;
+    delete order.user.phone;
+    delete order.user.lastname;
+    delete order.address.user;
+    order.details.map((detail) => {
+      delete detail.plate.user;
+    });
 
-  //   delete plate.user.password;
-  //   delete plate.user.image;
-  //   delete plate.user.createdAt;
-  //   delete plate.user.isActive;
-  //   delete plate.user.roles;
-  //   delete plate.user.updateAt;
-  //   delete plate.user.token;
-  //   delete plate.user.phone;
-  //   delete plate.user.lastname;
-  //   delete plate.category.createdAt;
-  //   delete plate.category.updateAt;
-  //   delete plate.category.isActive;
-  //   delete plate.category.user;
-
-  //   return res.json(plate);
-  // }
+    return res.json(order);
+  }
 
   // //********************************************************************** */
 
@@ -243,31 +325,4 @@ export class OrderController {
       throw new BadRequestError("revisar log servidor");
     }
   }
-
-  // async remove(req: Request, res: Response) {
-  //   const { id } = req.params;
-
-  //   if (!isUUID(id)) throw new BadRequestError("Plato no valida");
-
-  //   const plate = await plateRepository.findOneBy({ id });
-  //   if (!plate) throw new BadRequestError("Plato no existe");
-
-  //   try {
-  //     await plateRepository.delete(id);
-
-  //     // Limpiar imágenes previas
-  //     plate.images.map(async (image) => {
-  //       const arrayName = image.split("/");
-  //       const nameFile = arrayName[arrayName.length - 1];
-  //       const [public_id] = nameFile.split(".");
-  //       await destroyImageClaudinary(
-  //         `${folderNameApp}/${folderNamePlates}/${public_id}`
-  //       );
-  //     });
-  //     return res.json({ message: "Eliminado con exito" });
-  //   } catch (error) {
-  //     console.log(error);
-  //     throw new BadRequestError("revisar log servidor");
-  //   }
-  // }
 }

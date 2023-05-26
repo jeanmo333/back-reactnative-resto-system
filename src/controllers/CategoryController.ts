@@ -58,6 +58,12 @@ export class CategoryController {
     const { limit = 10, offset = 0 } = req.query;
 
     try {
+      const numberOfCategories = await categoryRepository.count({
+        where: {
+          isActive: true,
+        },
+      });
+
       const categories = await categoryRepository.find({
         where: {
           isActive: true,
@@ -78,7 +84,7 @@ export class CategoryController {
         delete category.user.lastname;
       });
 
-      return res.json(categories);
+      return res.json({ categories, numberOfCategories });
     } catch (error) {
       console.log(error);
       throw new BadRequestError("revisar log servidor");

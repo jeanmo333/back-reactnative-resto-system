@@ -12,6 +12,10 @@ const upload = multer({
 router.use(authMiddleware);
 router.post("/", new PlateController().create);
 router.get("/", new PlateController().findAll);
+router.get(
+  "/findall-bycategory/:term",
+  new PlateController().findAllByCategory
+);
 router.get("/:term", new PlateController().findOne);
 router.patch("/:id", new PlateController().update);
 router.delete("/:id", new PlateController().remove);

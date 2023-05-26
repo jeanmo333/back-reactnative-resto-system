@@ -17,6 +17,8 @@ import {
   folderNamePlates,
   uploadFileClaudinary,
 } from "../helpers/claudinary";
+import { ICategory } from "../interfaces";
+import { Category } from "../entities/Category";
 
 export class PlateController {
   async create(req: Request, res: Response) {
@@ -137,9 +139,53 @@ export class PlateController {
     const { limit = 10, offset = 0 } = req.query;
 
     try {
+      const numberOfPlates = await plateRepository.count();
+
       const plates = await plateRepository.find({
         where: {
           isActive: true,
+        },
+        relations: {
+          category: true,
+        },
+        take: Number(limit),
+        skip: Number(offset),
+      });
+
+      plates.map((plate) => {
+        delete plate.user.password;
+        delete plate.user.image;
+        delete plate.user.createdAt;
+        delete plate.user.isActive;
+        delete plate.user.roles;
+        delete plate.user.updateAt;
+        delete plate.user.token;
+        delete plate.user.phone;
+        delete plate.user.lastname;
+        delete plate.category.createdAt;
+        delete plate.category.updateAt;
+        delete plate.category.isActive;
+        delete plate.category.user;
+      });
+
+      return res.json({ plates, numberOfPlates });
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestError("revisar log servidor");
+    }
+  }
+
+  async findAllByCategory(req: Request, res: Response) {
+    const { limit = 10, offset = 0 } = req.query;
+    const { term } = req.params;
+
+    try {
+      const plates = await plateRepository.find({
+        where: {
+          isActive: true,
+          category: {
+            name: term,
+          },
         },
         relations: {
           category: true,

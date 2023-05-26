@@ -11,6 +11,7 @@ import {
 import { User } from "./User";
 import { Detail } from "./Detail";
 import { Address } from "./Address";
+import { IsOptional } from "class-validator";
 
 @Entity("orders")
 export class Order {
@@ -38,7 +39,7 @@ export class Order {
   profit: number;
 
   @Column("text", {
-    default: "RECIBIDO",
+    default: "PAGADO",
   })
   status: string;
 
@@ -53,9 +54,11 @@ export class Order {
   @JoinTable()
   details: Detail[];
 
+  @IsOptional()
   @ManyToOne(() => User, (user) => user.order, { eager: true })
   user: Partial<User>;
 
+  @IsOptional()
   @ManyToOne(() => Address, (address) => address.order, { eager: true })
   address: Partial<Address>;
 }
