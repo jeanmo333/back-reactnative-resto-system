@@ -304,4 +304,21 @@ export class UserController {
       throw new BadRequestError("hubo un error");
     }
   }
+
+  async getByAdmin(req: Request, res: Response) {
+    const { limit = 10, offset = 0 } = req.query;
+
+    try {
+      const numberOfUsers = await userRepository.count();
+      const users = await userRepository.find({
+        take: Number(limit),
+        skip: Number(offset),
+      });
+
+      return res.json({ users, numberOfUsers });
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestError("revisar log servidor");
+    }
+  }
 }
