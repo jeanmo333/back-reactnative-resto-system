@@ -67,7 +67,7 @@ export class PlateController {
     delete req.user.image;
     delete req.user.createdAt;
     delete req.user.isActive;
-    delete req.user.roles;
+    delete req.user.role;
     delete req.user.updateAt;
     delete req.user.token;
     delete req.user.phone;
@@ -157,7 +157,7 @@ export class PlateController {
         delete plate.user.image;
         delete plate.user.createdAt;
         delete plate.user.isActive;
-        delete plate.user.roles;
+        delete plate.user.role;
         delete plate.user.updateAt;
         delete plate.user.token;
         delete plate.user.phone;
@@ -199,7 +199,7 @@ export class PlateController {
         delete plate.user.image;
         delete plate.user.createdAt;
         delete plate.user.isActive;
-        delete plate.user.roles;
+        delete plate.user.role;
         delete plate.user.updateAt;
         delete plate.user.token;
         delete plate.user.phone;
@@ -248,7 +248,7 @@ export class PlateController {
     delete plate.user.image;
     delete plate.user.createdAt;
     delete plate.user.isActive;
-    delete plate.user.roles;
+    delete plate.user.role;
     delete plate.user.updateAt;
     delete plate.user.token;
     delete plate.user.phone;
@@ -290,7 +290,7 @@ export class PlateController {
       delete plateUpdate!.user.image;
       delete plateUpdate!.user.createdAt;
       delete plateUpdate!.user.isActive;
-      delete plateUpdate!.user.roles;
+      delete plateUpdate!.user.role;
       delete plateUpdate!.user.updateAt;
       delete plateUpdate!.user.token;
       delete plateUpdate!.user.phone;

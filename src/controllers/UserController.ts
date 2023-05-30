@@ -88,9 +88,9 @@ export class UserController {
       throw new BadRequestError("Email o password no valido");
     }
 
-    // if (!user.isActive) {
-    //   throw new BadRequestError("Tu cuenta no ha sido confirmado");
-    // }
+    if (!user.isActive) {
+      throw new BadRequestError("Tu cuenta no esta activo");
+    }
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_PASS ?? "", {
       expiresIn: "12h",
@@ -316,6 +316,58 @@ export class UserController {
       });
 
       return res.json({ users, numberOfUsers });
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestError("revisar log servidor");
+    }
+  }
+
+  async changeSatusByAdmin(req: Request, res: Response) {
+    const validStatus = [true, false];
+    const { status } = req.body;
+    const { id } = req.params;
+
+    if (!isUUID(id)) throw new BadRequestError("Usuario no valido");
+
+    const userExist = await userRepository.findOneBy({ id });
+    if (!userExist) throw new BadRequestError("Usuario no existe");
+
+    if (!validStatus.includes(status)) {
+      throw new BadRequestError("Estado no valido");
+    }
+
+    try {
+      await userRepository.update(id, { isActive: status });
+
+      const userUpdate = await userRepository.findOneBy({ id });
+
+      return res.json({ userUpdate, message: "Estado cambiado con exito" });
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestError("revisar log servidor");
+    }
+  }
+
+  async changeRoleByAdmin(req: Request, res: Response) {
+    const validStatus = ["admin", "client"];
+    const { role } = req.body;
+    const { id } = req.params;
+
+    if (!isUUID(id)) throw new BadRequestError("Usuario no valido");
+
+    const userExist = await userRepository.findOneBy({ id });
+    if (!userExist) throw new BadRequestError("Usuario no existe");
+
+    if (!validStatus.includes(role)) {
+      throw new BadRequestError("Rol no valido");
+    }
+
+    try {
+      await userRepository.update(id, { role });
+
+      const userUpdate = await userRepository.findOneBy({ id });
+
+      return res.json({ userUpdate, message: "Rol cambiado con exito" });
     } catch (error) {
       console.log(error);
       throw new BadRequestError("revisar log servidor");

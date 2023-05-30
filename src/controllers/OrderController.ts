@@ -15,14 +15,22 @@ function calcPrice(price: number, quantity: number) {
   return price * quantity;
 }
 
+function calcProfit(
+  sale_price: number,
+  prepared_price: number,
+  quantity: number
+) {
+  return (sale_price - prepared_price) * quantity;
+}
+
 export class OrderController {
   async create(req: Request, res: Response) {
-    // console.log(req.body);
-
     const { details, idAddress, idClientStripe } = req.body;
     let detailToSave: IDetails[] = [];
     let total = 0;
     let subtotal = 0;
+    let profit = 0;
+    let totalProfit = 0;
 
     const address = await addressRepository.findOneBy({ id: idAddress });
     if (!address) throw new BadRequestError("Address no existe");
@@ -30,12 +38,18 @@ export class OrderController {
     for await (const item of details) {
       const response = await plateRepository.findOneBy({ id: item.idProduct });
       subtotal = calcPrice(response?.sale_price!, item.quantity);
+      profit = calcProfit(
+        response?.sale_price!,
+        response?.prepared_price!,
+        item.quantity
+      );
       total += subtotal;
+      totalProfit += profit;
 
       detailToSave.push({
         id: response!.id,
         quantity: item.quantity,
-        subtotal: calcPrice(response?.sale_price!, item.quantity),
+        subtotal,
       });
     }
 
@@ -58,7 +72,7 @@ export class OrderController {
     delete req.user.image;
     delete req.user.createdAt;
     delete req.user.isActive;
-    delete req.user.roles;
+    delete req.user.role;
     delete req.user.updateAt;
     delete req.user.token;
     delete req.user.phone;
@@ -70,7 +84,9 @@ export class OrderController {
       order.user = req.user;
       order.total = total;
       order.address = address;
-      (order.idPayment = charge.id), (order.details = newDetailOrder as any);
+      order.idPayment = charge.id;
+      order.profit = totalProfit;
+      order.details = newDetailOrder as any;
 
       const savedOrder = await orderRepository.save(order);
 
@@ -95,26 +111,27 @@ export class OrderController {
           details: {
             plate: true,
           },
+          user: true,
         },
         take: Number(limit),
         skip: Number(offset),
       });
 
-      // orders.map((order) => {
-      //   delete order.user.password;
-      //   delete order.user.image;
-      //   delete order.user.createdAt;
-      //   delete order.user.isActive;
-      //   delete order.user.roles;
-      //   delete order.user.updateAt;
-      //   delete order.user.token;
-      //   delete order.user.phone;
-      //   delete order.user.lastname;
-      //   delete order.address.user;
-      //   order.details.map((detail) => {
-      //     delete detail.plate.user;
-      //   });
-      // });
+      orders.map((order) => {
+        delete order.user.password;
+        delete order.user.image;
+        delete order.user.createdAt;
+        delete order.user.isActive;
+        delete order.user.role;
+        delete order.user.updateAt;
+        delete order.user.token;
+        delete order.user.phone;
+        delete order.user.lastname;
+        delete order.address.user;
+        order.details.map((detail) => {
+          delete detail.plate.user;
+        });
+      });
 
       return res.json({ orders, numberOfOrders });
     } catch (error) {
@@ -151,7 +168,7 @@ export class OrderController {
         delete order.user.image;
         delete order.user.createdAt;
         delete order.user.isActive;
-        delete order.user.roles;
+        delete order.user.role;
         delete order.user.updateAt;
         delete order.user.token;
         delete order.user.phone;
@@ -201,7 +218,7 @@ export class OrderController {
         delete order.user.image;
         delete order.user.createdAt;
         delete order.user.isActive;
-        delete order.user.roles;
+        delete order.user.role;
         delete order.user.updateAt;
         delete order.user.token;
         delete order.user.phone;
@@ -242,7 +259,7 @@ export class OrderController {
         delete order.user.image;
         delete order.user.createdAt;
         delete order.user.isActive;
-        delete order.user.roles;
+        delete order.user.role;
         delete order.user.updateAt;
         delete order.user.token;
         delete order.user.phone;
@@ -274,7 +291,7 @@ export class OrderController {
     delete order.user.image;
     delete order.user.createdAt;
     delete order.user.isActive;
-    delete order.user.roles;
+    delete order.user.role;
     delete order.user.updateAt;
     delete order.user.token;
     delete order.user.phone;
@@ -312,7 +329,7 @@ export class OrderController {
       delete orderUpdate!.user.image;
       delete orderUpdate!.user.createdAt;
       delete orderUpdate!.user.isActive;
-      delete orderUpdate!.user.roles;
+      delete orderUpdate!.user.role;
       delete orderUpdate!.user.updateAt;
       delete orderUpdate!.user.token;
       delete orderUpdate!.user.phone;

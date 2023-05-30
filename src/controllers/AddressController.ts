@@ -57,7 +57,7 @@ export class AddressController {
     delete req.user.image;
     delete req.user.createdAt;
     delete req.user.isActive;
-    delete req.user.roles;
+    delete req.user.role;
     delete req.user.updateAt;
     delete req.user.token;
     delete req.user.phone;
@@ -104,7 +104,7 @@ export class AddressController {
         delete address.user.image;
         delete address.user.createdAt;
         delete address.user.isActive;
-        delete address.user.roles;
+        delete address.user.role;
         delete address.user.updateAt;
         delete address.user.token;
         delete address.user.phone;
@@ -142,7 +142,7 @@ export class AddressController {
     delete address.user.image;
     delete address.user.createdAt;
     delete address.user.isActive;
-    delete address.user.roles;
+    delete address.user.role;
     delete address.user.updateAt;
     delete address.user.token;
     delete address.user.phone;
@@ -192,7 +192,7 @@ export class AddressController {
       delete addressUpdate!.user.image;
       delete addressUpdate!.user.createdAt;
       delete addressUpdate!.user.isActive;
-      delete addressUpdate!.user.roles;
+      delete addressUpdate!.user.role;
       delete addressUpdate!.user.updateAt;
       delete addressUpdate!.user.token;
       delete addressUpdate!.user.phone;

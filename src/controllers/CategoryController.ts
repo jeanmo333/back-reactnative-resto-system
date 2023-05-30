@@ -31,7 +31,7 @@ export class CategoryController {
     delete req.user.image;
     delete req.user.createdAt;
     delete req.user.isActive;
-    delete req.user.roles;
+    delete req.user.role;
     delete req.user.updateAt;
     delete req.user.token;
     delete req.user.phone;
@@ -77,7 +77,7 @@ export class CategoryController {
         delete category.user.image;
         delete category.user.createdAt;
         delete category.user.isActive;
-        delete category.user.roles;
+        delete category.user.role;
         delete category.user.updateAt;
         delete category.user.token;
         delete category.user.phone;
@@ -118,7 +118,7 @@ export class CategoryController {
     delete category.user.image;
     delete category.user.createdAt;
     delete category.user.isActive;
-    delete category.user.roles;
+    delete category.user.role;
     delete category.user.updateAt;
     delete category.user.token;
     delete category.user.phone;
@@ -152,7 +152,7 @@ export class CategoryController {
       delete categoryUpdate!.user.image;
       delete categoryUpdate!.user.createdAt;
       delete categoryUpdate!.user.isActive;
-      delete categoryUpdate!.user.roles;
+      delete categoryUpdate!.user.role;
       delete categoryUpdate!.user.updateAt;
       delete categoryUpdate!.user.token;
       delete categoryUpdate!.user.phone;

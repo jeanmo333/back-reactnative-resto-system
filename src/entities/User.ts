@@ -61,18 +61,16 @@ export class User {
   @IsOptional()
   @IsBoolean()
   @Column("bool", {
-    default: false,
+    default: true,
   })
   isActive: boolean;
 
-  @IsString({ each: true })
-  @IsArray()
+  @IsString()
   @IsOptional()
   @Column("text", {
-    array: true,
-    default: ["client"],
+    default: "client",
   })
-  roles: string[];
+  role: string;
 
   @IsString()
   @Column("text", {

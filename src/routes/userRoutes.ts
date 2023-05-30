@@ -26,5 +26,11 @@ router.put("/update-password", new UserController().updatePassword);
 
 router.use(isAdmin);
 router.get("/admin", new UserController().getByAdmin);
+router.patch(
+  "/admin/update-status/:id",
+  new UserController().changeSatusByAdmin
+);
+
+router.patch("/admin/update-role/:id", new UserController().changeRoleByAdmin);
 
 export default router;
