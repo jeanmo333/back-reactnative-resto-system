@@ -7,4 +7,5 @@ export interface IDetails {
   subtotal: number;
   order?: IOrder;
   quantity: number;
+  stock: number;
 }

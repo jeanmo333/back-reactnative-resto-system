@@ -11,6 +11,12 @@ import { orderRepository } from "../repositories/orderRepository";
 import { detailRepository } from "../repositories/detailRepository";
 import { Between } from "typeorm";
 
+async function decreaseStock(idPro: string, quantity: number) {
+  const plate = await plateRepository.findOneBy({ id: idPro });
+  const newStock = plate?.stock! - quantity;
+  await plateRepository.update({ id: idPro }, { stock: newStock });
+}
+
 function calcPrice(price: number, quantity: number) {
   return price * quantity;
 }
@@ -49,6 +55,7 @@ export class OrderController {
       detailToSave.push({
         id: response!.id,
         quantity: item.quantity,
+        stock: response!.stock,
         subtotal,
       });
     }
@@ -65,6 +72,7 @@ export class OrderController {
       detailDb.plate = detail.id;
       detailDb.quantity = detail.quantity;
       detailDb.subtotal = detail.subtotal;
+      decreaseStock(detail.id, detail.quantity);
       return detailDb;
     });
 

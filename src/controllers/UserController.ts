@@ -12,12 +12,14 @@ cloudinary.config(process.env.CLOUDINARY_URL || "");
 import generarId from "../helpers/generarId";
 import { IUser } from "../interfaces";
 import { isUUID } from "class-validator";
+import { plateRepository } from "../repositories/plateRepository";
 import {
   destroyImageClaudinary,
   folderNameApp,
   folderNameUsers,
   uploadFileClaudinary,
 } from "../helpers/claudinary";
+import { LessThan } from "typeorm";
 
 export class UserController {
   async create(req: Request, res: Response) {
@@ -371,6 +373,28 @@ export class UserController {
     } catch (error) {
       console.log(error);
       throw new BadRequestError("revisar log servidor");
+    }
+  }
+
+  async dashboard(req: Request, res: Response) {
+    try {
+      const platesWithNoInventory = await plateRepository.count({
+        where: {
+          stock: 0,
+          isActive: true,
+        },
+      });
+
+      const lowInventory = await plateRepository.count({
+        where: {
+          stock: LessThan(10),
+          isActive: true,
+        },
+      });
+
+      return res.json({ platesWithNoInventory, lowInventory });
+    } catch (error) {
+      console.log(error);
     }
   }
 }

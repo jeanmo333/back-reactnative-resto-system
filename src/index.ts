@@ -11,6 +11,7 @@ import categoryRoutes from "./routes/categoryRoutes";
 import plateRoutes from "./routes/plateRoutes";
 import addressRoutes from "./routes/addressRoutes";
 import orderRoutes from "./routes/orderRoutes";
+import dashboardRoutes from "./routes/dashboardRoutes";
 
 AppDataSource.initialize().then(() => {
   const PORT = process.env.PORT || 3000;
@@ -35,8 +36,9 @@ AppDataSource.initialize().then(() => {
   app.use("/api/plates", plateRoutes);
   app.use("/api/addresses", addressRoutes);
   app.use("/api/orders", orderRoutes);
+  app.use("/api/dashboard", dashboardRoutes);
 
-  app.use(errorMiddleware);
+  // app.use(errorMiddleware);
 
   app.listen(PORT, () => {
     console.log(`Server listening on port: ${PORT}`);
