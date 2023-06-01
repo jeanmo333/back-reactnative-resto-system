@@ -12,7 +12,7 @@ cloudinary.config(process.env.CLOUDINARY_URL || "");
 import generarId from "../helpers/generarId";
 import { IUser } from "../interfaces";
 import { isUUID } from "class-validator";
-import { plateRepository } from "../repositories/plateRepository";
+
 import {
   destroyImageClaudinary,
   folderNameApp,
@@ -313,6 +313,7 @@ export class UserController {
     try {
       const numberOfUsers = await userRepository.count();
       const users = await userRepository.find({
+        order: { createdAt: "DESC" },
         take: Number(limit),
         skip: Number(offset),
       });
@@ -373,28 +374,6 @@ export class UserController {
     } catch (error) {
       console.log(error);
       throw new BadRequestError("revisar log servidor");
-    }
-  }
-
-  async dashboard(req: Request, res: Response) {
-    try {
-      const platesWithNoInventory = await plateRepository.count({
-        where: {
-          stock: 0,
-          isActive: true,
-        },
-      });
-
-      const lowInventory = await plateRepository.count({
-        where: {
-          stock: LessThan(10),
-          isActive: true,
-        },
-      });
-
-      return res.json({ platesWithNoInventory, lowInventory });
-    } catch (error) {
-      console.log(error);
     }
   }
 }

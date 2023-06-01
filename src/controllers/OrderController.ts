@@ -9,7 +9,7 @@ import { Detail } from "../entities/Detail";
 import { Order } from "../entities/Order";
 import { orderRepository } from "../repositories/orderRepository";
 import { detailRepository } from "../repositories/detailRepository";
-import { Between } from "typeorm";
+import { Between, getManager } from "typeorm";
 
 async function decreaseStock(idPro: string, quantity: number) {
   const plate = await plateRepository.findOneBy({ id: idPro });
@@ -121,6 +121,7 @@ export class OrderController {
           },
           user: true,
         },
+        order: { createdAt: "DESC" },
         take: Number(limit),
         skip: Number(offset),
       });
@@ -167,6 +168,7 @@ export class OrderController {
             plate: true,
           },
         },
+        order: { createdAt: "DESC" },
         take: Number(limit),
         skip: Number(offset),
       });
@@ -192,90 +194,6 @@ export class OrderController {
       console.log(error);
       throw new BadRequestError("revisar log servidor");
     }
-  }
-
-  async getOrdersByDay(req: Request, res: Response) {
-    const { date } = req.params;
-    const parsedDate = new Date(date);
-    const startDate = new Date(
-      parsedDate.getFullYear(),
-      parsedDate.getMonth(),
-      parsedDate.getDate()
-    ); // inicio del día
-    const endDate = new Date(
-      parsedDate.getFullYear(),
-      parsedDate.getMonth(),
-      parsedDate.getDate() + 1
-    ); // fin del día
-
-    try {
-      const numberOfDayOrders = await orderRepository.count({
-        where: {
-          createdAt: Between(startDate, endDate),
-        },
-      });
-
-      const ordersDay = await orderRepository.find({
-        where: {
-          createdAt: Between(startDate, endDate),
-        },
-      });
-
-      ordersDay.map((order) => {
-        delete order.user.password;
-        delete order.user.image;
-        delete order.user.createdAt;
-        delete order.user.isActive;
-        delete order.user.role;
-        delete order.user.updateAt;
-        delete order.user.token;
-        delete order.user.phone;
-        delete order.user.lastname;
-        delete order.address.user;
-      });
-
-      return res.json({ ordersDay, numberOfDayOrders });
-    } catch (error) {
-      console.log(error);
-      throw new BadRequestError("revisar log servidor");
-    }
-  }
-
-  async getOrdersByMonth(req: Request, res: Response) {
-    const { month, year } = req.params;
-    const monthNumber = Number(month);
-    const yearNumber = Number(year);
-
-    const startDate = new Date(yearNumber, monthNumber - 1, 1); // inicio del mes
-    const endDate = new Date(yearNumber, monthNumber, 0); // fin del mes
-
-    try {
-      const numberOfMonthOrders = await orderRepository.count({
-        where: {
-          createdAt: Between(startDate, endDate),
-        },
-      });
-
-      const ordersMonth = await orderRepository.find({
-        where: {
-          createdAt: Between(startDate, endDate),
-        },
-      });
-
-      ordersMonth.map((order) => {
-        delete order.user.password;
-        delete order.user.image;
-        delete order.user.createdAt;
-        delete order.user.isActive;
-        delete order.user.role;
-        delete order.user.updateAt;
-        delete order.user.token;
-        delete order.user.phone;
-        delete order.user.lastname;
-        delete order.address.user;
-      });
-      return res.json({ ordersMonth, numberOfMonthOrders });
-    } catch (error) {}
   }
 
   // //********************************************************************** */

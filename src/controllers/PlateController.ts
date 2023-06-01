@@ -148,6 +148,7 @@ export class PlateController {
         relations: {
           category: true,
         },
+        order: { createdAt: "DESC" },
         take: Number(limit),
         skip: Number(offset),
       });
@@ -190,6 +191,7 @@ export class PlateController {
         relations: {
           category: true,
         },
+        order: { createdAt: "DESC" },
         take: Number(limit),
         skip: Number(offset),
       });

@@ -68,6 +68,7 @@ export class CategoryController {
         where: {
           isActive: true,
         },
+        order: { createdAt: "DESC" },
         take: Number(limit),
         skip: Number(offset),
       });
