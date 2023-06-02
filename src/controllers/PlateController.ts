@@ -6,9 +6,8 @@ dotenv.config();
 import { v2 as cloudinary } from "cloudinary";
 cloudinary.config(process.env.CLOUDINARY_URL || "");
 
-import { BadRequestError, UnauthorizedError } from "../helpers/api-erros";
+import { BadRequestError } from "../helpers/api-erros";
 import { categoryRepository } from "../repositories/categoryRepository";
-import asyncForeach from "../helpers/async_foreach";
 import { plateRepository } from "../repositories/plateRepository";
 import { Plate } from "../entities/Plate";
 import {
@@ -17,8 +16,6 @@ import {
   folderNamePlates,
   uploadFileClaudinary,
 } from "../helpers/claudinary";
-import { ICategory } from "../interfaces";
-import { Category } from "../entities/Category";
 
 export class PlateController {
   async create(req: Request, res: Response) {
@@ -93,6 +90,119 @@ export class PlateController {
       throw new BadRequestError("revisar log servidor");
     }
   }
+
+  ///****************************metodo para crear plato con 3 images***************************** */
+  //   async create(req: Request, res: Response) {
+  //     //console.log(JSON.parse(req.body.plate));
+  //     //console.log(req.files!.archives);
+
+  //     const archives = req.files!.archives as any;
+  //     const tempFilePaths = archives.map((archive: any) => archive.tempFilePath);
+
+  //     const {
+  //       name = "",
+  //       description = "",
+  //       prepared_price = 0,
+  //       sale_price = 0,
+  //       stock = 0,
+  //       idCategory = "",
+  //     } = JSON.parse(req.body.plate);
+
+  //     const nameToLowerCase = name.toLowerCase();
+
+  //     let plateSave: any;
+  //     let inserts = 0;
+
+  //     if ([nameToLowerCase, idCategory].includes("")) {
+  //       throw new BadRequestError("Hay Campo vacio");
+  //     }
+
+  //     if (archives.length > 3) {
+  //       throw new BadRequestError("maximo 3 imagenes");
+  //     }
+
+  //     const plateName = await plateRepository.findOneBy({
+  //       name: nameToLowerCase,
+  //     });
+  //     if (plateName) {
+  //       throw new BadRequestError("Plato ya existe");
+  //     }
+
+  //     const category = await categoryRepository.findOneBy({ id: idCategory });
+  //     if (!category) {
+  //       throw new BadRequestError("Categoria no existe");
+  //     }
+
+  //     //delete some user column
+  //     delete req.user.password;
+  //     delete req.user.image;
+  //     delete req.user.createdAt;
+  //     delete req.user.isActive;
+  //     delete req.user.role;
+  //     delete req.user.updateAt;
+  //     delete req.user.token;
+  //     delete req.user.phone;
+  //     delete req.user.lastname;
+
+  //     const newPlate = plateRepository.create({
+  //       name: nameToLowerCase,
+  //       description,
+  //       prepared_price,
+  //       sale_price,
+  //       stock,
+  //       category,
+  //     });
+  //     newPlate.user = req.user;
+
+  //     try {
+  //       plateSave = await plateRepository.save(newPlate);
+
+  //       //delete some category column
+  //       delete plateSave.category.createdAt;
+  //       delete plateSave.category.updateAt;
+  //       delete plateSave.category.isActive;
+  //       delete plateSave.category.user;
+  //       delete plateSave.category.user;
+
+  //       const start = async () => {
+  //         await asyncForeach(tempFilePaths, async (archive: any) => {
+  //           const secure_url = await uploadFileClaudinary(
+  //             archive,
+  //             `${folderNameApp}/${folderNamePlates}`
+  //           );
+
+  //           if (secure_url != undefined && secure_url != null) {
+  //             // CREO LA IMAGEN EN CLAUDINARY
+  //             if (inserts == 0) {
+  //               plateSave.images = [...plateSave.images, secure_url];
+  //             } else if (inserts == 1) {
+  //               plateSave.images = [...plateSave.images, secure_url];
+  //             } else if (inserts == 2) {
+  //               plateSave.images = [...plateSave.images, secure_url];
+  //             }
+  //           }
+  //           await plateRepository.update(
+  //             { id: plateSave.id },
+  //             { images: plateSave.images }
+  //           );
+
+  //           inserts = inserts + 1;
+
+  //           if (inserts == tempFilePaths.length) {
+  //             // TERMINO DE ALAMACENAR LAS TRES IMAGENES
+  //             return res.status(201).json({
+  //               plateSave,
+  //               message: "Creado con exito",
+  //             });
+  //           }
+  //         });
+  //       };
+  //       start();
+  //     } catch (error) {
+  //       console.log(error);
+  //       throw new BadRequestError("revisar log servidor");
+  //     }
+  //   }
 
   //********************************************************************** */
 
@@ -227,8 +337,10 @@ export class PlateController {
   //********************************************************************** */
 
   async update(req: Request, res: Response) {
-    const { idCategory, ...rest } = req.body;
+    const { idCategory, ...rest } = JSON.parse(req.body.plate);
     const { id } = req.params;
+    const { tempFilePath } = req.files!.archive as any;
+    let plateTosave;
 
     if (!isUUID(id)) throw new BadRequestError("Plato no valido");
 
@@ -239,8 +351,21 @@ export class PlateController {
     if (!category) throw new BadRequestError("Categoria no existe");
     plate.category = category;
 
+    // Limpiar imágenes previas cloudinary
+    const arrayName = plate.image.split("/");
+    const nameFile = arrayName[arrayName.length - 1];
+    const [public_id] = nameFile.split(".");
+    await destroyImageClaudinary(
+      `${folderNameApp}/${folderNamePlates}/${public_id}`
+    );
+
+    const secure_url = await uploadFileClaudinary(
+      tempFilePath,
+      `${folderNameApp}/${folderNamePlates}`
+    );
+
     try {
-      await plateRepository.update(id, rest);
+      await plateRepository.update(id, { ...rest, image: secure_url });
 
       const plateUpdate = await plateRepository.findOne({
         where: { id },
