@@ -86,14 +86,12 @@ export class Plate {
   })
   isActive: boolean;
 
-  @IsString({ each: true })
-  @IsArray()
   @IsOptional()
+  @IsString()
   @Column("text", {
-    array: true,
-    default: [""],
+    default: "",
   })
-  images: string[];
+  image: string;
 
   @ManyToOne(() => Category, (category) => category.plate, {
     onDelete: "CASCADE",

@@ -7,7 +7,7 @@ export interface IPlate {
   prepared_price: number;
   sale_price: number;
   stock: number;
-  images?: string[];
+  image?: string;
   isActive?: boolean;
   category?: string | ICategory;
   user?: string;

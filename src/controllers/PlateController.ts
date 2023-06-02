@@ -22,11 +22,7 @@ import { Category } from "../entities/Category";
 
 export class PlateController {
   async create(req: Request, res: Response) {
-    //console.log(JSON.parse(req.body.plate));
-    //console.log(req.files!.archives);
-
-    const archives = req.files!.archives as any;
-    const tempFilePaths = archives.map((archive: any) => archive.tempFilePath);
+    const { tempFilePath } = req.files!.archive as any;
 
     const {
       name = "",
@@ -39,15 +35,8 @@ export class PlateController {
 
     const nameToLowerCase = name.toLowerCase();
 
-    let plateSave: any;
-    let inserts = 0;
-
     if ([nameToLowerCase, idCategory].includes("")) {
       throw new BadRequestError("Hay Campo vacio");
-    }
-
-    if (archives.length > 3) {
-      throw new BadRequestError("maximo 3 imagenes");
     }
 
     const plateName = await plateRepository.findOneBy({
@@ -83,8 +72,14 @@ export class PlateController {
     });
     newPlate.user = req.user;
 
+    const secure_url = await uploadFileClaudinary(
+      tempFilePath,
+      `${folderNameApp}/${folderNamePlates}`
+    );
+    newPlate.image = secure_url;
+
     try {
-      plateSave = await plateRepository.save(newPlate);
+      const plateSave = await plateRepository.save(newPlate);
 
       //delete some category column
       delete plateSave.category.createdAt;
@@ -92,41 +87,7 @@ export class PlateController {
       delete plateSave.category.isActive;
       delete plateSave.category.user;
       delete plateSave.category.user;
-
-      const start = async () => {
-        await asyncForeach(tempFilePaths, async (archive: any) => {
-          const secure_url = await uploadFileClaudinary(
-            archive,
-            `${folderNameApp}/${folderNamePlates}`
-          );
-
-          if (secure_url != undefined && secure_url != null) {
-            // CREO LA IMAGEN EN CLAUDINARY
-            if (inserts == 0) {
-              plateSave.images = [...plateSave.images, secure_url];
-            } else if (inserts == 1) {
-              plateSave.images = [...plateSave.images, secure_url];
-            } else if (inserts == 2) {
-              plateSave.images = [...plateSave.images, secure_url];
-            }
-          }
-          await plateRepository.update(
-            { id: plateSave.id },
-            { images: plateSave.images }
-          );
-
-          inserts = inserts + 1;
-
-          if (inserts == tempFilePaths.length) {
-            // TERMINO DE ALAMACENAR LAS TRES IMAGENES
-            return res.status(201).json({
-              plateSave,
-              message: "Creado con exito",
-            });
-          }
-        });
-      };
-      start();
+      return res.json({ plateSave, message: "Creado con exito" });
     } catch (error) {
       console.log(error);
       throw new BadRequestError("revisar log servidor");
@@ -320,16 +281,14 @@ export class PlateController {
 
     try {
       await plateRepository.delete(id);
-
       // Limpiar imágenes previas
-      plate.images.map(async (image) => {
-        const arrayName = image.split("/");
-        const nameFile = arrayName[arrayName.length - 1];
-        const [public_id] = nameFile.split(".");
-        await destroyImageClaudinary(
-          `${folderNameApp}/${folderNamePlates}/${public_id}`
-        );
-      });
+      const arrayName = plate.image.split("/");
+      const nameFile = arrayName[arrayName.length - 1];
+      const [public_id] = nameFile.split(".");
+      await destroyImageClaudinary(
+        `${folderNameApp}/${folderNamePlates}/${public_id}`
+      );
+
       return res.json({ message: "Eliminado con exito" });
     } catch (error) {
       console.log(error);
